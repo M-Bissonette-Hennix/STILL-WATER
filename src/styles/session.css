@@ -1,0 +1,26 @@
+.session-shell { min-height: 100dvh; display: flex; flex-direction: column; padding: calc(var(--safe-top) + 12px) 18px calc(var(--safe-bottom) + 20px); }
+.session-top { display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
+.session-exit { width: 44px; height: 44px; border: 0; border-radius: 50%; color: var(--text-muted); background: transparent; cursor: pointer; font-size: 1.5rem; line-height: 1; }
+.session-phase-index { color: var(--text-muted); font-size: .72rem; letter-spacing: .15em; text-transform: uppercase; }
+.session-body { flex: 1; width: min(100%, 680px); margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px 0; }
+.phase-name { margin: 0; color: var(--text-secondary); letter-spacing: .18em; text-transform: uppercase; font-size: .78rem; font-weight: 650; }
+.phase-cue { margin: 26px 0 10px; font-size: clamp(1.7rem, 8vw, 3.3rem); line-height: 1.15; font-weight: 480; letter-spacing: -.02em; max-width: 14ch; }
+.phase-detail { color: var(--text-secondary); max-width: 32rem; line-height: 1.65; }
+.timer { margin-top: 26px; color: var(--text-muted); font-variant-numeric: tabular-nums; letter-spacing: .1em; font-size: .98rem; }
+.waterline-wrap { width: min(72vw, 360px); height: 86px; display: grid; place-items: center; margin: 30px 0 10px; }
+.waterline { width: var(--line-width, 42%); height: 1px; background: var(--water); opacity: var(--line-opacity, .78); transform: translateY(var(--line-y, 0px)); transition: width 120ms linear, opacity 180ms ease; box-shadow: 0 0 16px color-mix(in srgb, var(--water) 20%, transparent); }
+.breath-label { min-height: 1.4em; color: var(--water); font-size: .76rem; letter-spacing: .18em; }
+.session-actions { width: min(100%, 520px); margin: 24px auto 0; display: grid; gap: 10px; }
+.kuji-kanji { font-size: clamp(4rem, 22vw, 7rem); line-height: 1; font-weight: 400; color: var(--mist); margin: 22px 0 14px; }
+.kuji-name { font-size: 1.8rem; letter-spacing: .14em; margin: 0 0 6px; }
+.kuji-mudra { color: var(--text-secondary); margin: 0 0 26px; }
+.aperture-line { width: var(--aperture, 30%); height: 1px; background: var(--water-dim); transition: width var(--duration-field) ease-out, opacity var(--duration-field) ease; }
+.ready-button { width: min(76vw, 360px); aspect-ratio: 1; max-height: 360px; border-radius: 50%; border: 1px solid var(--water-dim); background: color-mix(in srgb, var(--water-dim) 10%, transparent); color: var(--text-primary); font-size: clamp(1.15rem, 5vw, 1.55rem); letter-spacing: .18em; cursor: pointer; transition: background var(--duration-fast), transform var(--duration-fast); }
+.ready-button:active { transform: scale(.985); background: color-mix(in srgb, var(--water-dim) 24%, transparent); }
+.deploy-cue { min-height: 3.4em; display: grid; place-items: center; font-size: clamp(1.45rem, 7vw, 2.6rem); line-height: 1.25; font-weight: 480; }
+.skip-encode { margin-top: 28px; border: 0; background: transparent; color: var(--text-muted); min-height: 44px; padding: 8px 16px; cursor: pointer; }
+.skip-encode.active { color: var(--warning); }
+.review-shell { width: min(100%, 620px); margin: auto; padding: 32px 0; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .001ms !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
+}
