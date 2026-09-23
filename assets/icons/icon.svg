@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="STILL WATER">
+  <rect width="512" height="512" rx="112" fill="#10181A"/>
+  <rect x="118" y="247" width="276" height="4" rx="2" fill="#82AEB1"/>
+  <rect x="162" y="267" width="188" height="2" rx="1" fill="#527679" opacity="0.72"/>
+</svg>
