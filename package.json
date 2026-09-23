@@ -1,0 +1,17 @@
+{
+  "name": "still-water",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first STILL WATER Practice Protocol 1.0 training and retrieval PWA",
+  "scripts": {
+    "test": "node --test",
+    "certify": "node scripts/certify.js",
+    "validate:assets": "node scripts/validate-assets.js",
+    "verify": "npm test && npm run certify && npm run validate:assets",
+    "serve": "node scripts/serve.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

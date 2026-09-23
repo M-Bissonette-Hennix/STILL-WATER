@@ -1,0 +1,23 @@
+STILL WATER v0.2.0 — BROWSER VERIFICATION STATUS
+
+STATUS: ENVIRONMENT-BLOCKED, NOT AN APPLICATION FAILURE
+
+Automated Chromium was launched successfully through the DevTools protocol, but the execution environment applies an enterprise URLBlocklist that returns ERR_BLOCKED_BY_ADMINISTRATOR for:
+- http://127.0.0.1:<port>/
+- hostname aliases mapped to 127.0.0.1
+- file:// URLs
+
+Because JavaScript application execution cannot be reached through an allowed local origin in this environment, no claim of interactive-browser PASS is made.
+
+Compensating verification completed in-container:
+- JavaScript syntax parsing: PASS
+- 52-test deterministic suite at time of this note: PASS (final VERIFY.txt supersedes count if larger)
+- protocol certificate: PASS
+- local module import graph closure: PASS
+- service worker precache file closure: PASS
+- manifest icon/path checks: PASS
+- GitHub Pages relative-path check: PASS
+- restrictive CSP presence: PASS
+- critical runtime modules contain no external network references: PASS
+
+Use docs/BROWSER-VERIFICATION.md on an unrestricted browser or the deployed GitHub Pages origin before tagging a production release.

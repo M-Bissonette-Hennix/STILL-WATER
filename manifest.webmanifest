@@ -1,0 +1,15 @@
+{
+  "name": "STILL WATER",
+  "short_name": "STILL WATER",
+  "description": "Attentional state acquisition and retrieval training.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#10181A",
+  "theme_color": "#10181A",
+  "icons": [
+    { "src": "./assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
