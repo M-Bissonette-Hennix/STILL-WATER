@@ -204,6 +204,7 @@ async function handleClick(event) {
       case 'open-progress': runtime.view = 'progress'; return render();
       case 'open-history': runtime.view = 'history'; return render();
       case 'open-protocol': runtime.view = 'protocol'; return render();
+      case 'test-audio': return testAudio();
       case 'open-train': runtime.view = 'train_prepare'; return render();
       case 'open-deploy': return openDeployPrepare();
       case 'next-onboarding': runtime.onboardingIndex = Math.min(4, runtime.onboardingIndex + 1); return render();
@@ -292,6 +293,14 @@ async function handleChange(event) {
     };
     render();
   }
+}
+
+async function testAudio() {
+  audio.configure({ enabled: true, volume: Math.max(0.45, Number(runtime.settings.audio_volume) || 0.45) });
+  const unlocked = await audio.unlock().catch(() => false);
+  const played = unlocked ? await audio.cue('test').catch(() => false) : false;
+  audio.configure({ enabled: runtime.settings.audio_enabled, volume: runtime.settings.audio_volume });
+  showToast(played ? 'Audio test played.' : 'Audio unavailable. Check device volume and try again.');
 }
 
 async function finishOnboarding() {
