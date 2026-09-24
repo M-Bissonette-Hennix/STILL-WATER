@@ -1,114 +1,181 @@
+const CUE_URL = new URL('../../assets/audio/cue.mp3', import.meta.url).href;
+const TRAIN_TIMELINE_URL = new URL('../../assets/audio/train-timeline.mp3', import.meta.url).href;
+const TRANSITION_TEST_URL = new URL('../../assets/audio/transition-test.mp3', import.meta.url).href;
+
+export const TRAIN_TIMELINE_OFFSETS_SECONDS = Object.freeze({
+  REGULATE: 0,
+  STABILIZE: 120,
+  RELEASE_COUNT: 420,
+  RELEASE_ANCHOR: 450,
+  OPEN: 480,
+  ENCODE: 660,
+  TRANSFER: 680
+});
+
 export class AudioEngine {
-  #context = null;
   #enabled = true;
   #volume = 0.28;
-  #primed = false;
+  #timeline = null;
+  #timelineStopTimer = null;
+  #activeOneShots = new Set();
+  #mediaFactory;
+
+  constructor({ mediaFactory = defaultMediaFactory } = {}) {
+    this.#mediaFactory = mediaFactory;
+  }
 
   configure({ enabled, volume }) {
     this.#enabled = Boolean(enabled);
-    this.#volume = Math.max(0, Math.min(1, Number(volume) || 0));
+    this.#volume = clamp(Number(volume) || 0, 0, 1);
+    if (this.#timeline) this.#timeline.volume = this.#mediaVolume();
   }
 
-  async unlock() {
-    if (!this.#enabled) return false;
-
-    // Safari/iOS exposes Audio Session on newer releases. Playback mode is a
-    // progressive enhancement: unsupported browsers simply ignore this path.
+  /**
+   * Prepare the long-lived TRAIN timeline without attempting playback.
+   * This is intentionally best-effort: iOS may defer media loading until the
+   * first user gesture, but service-worker precaching still makes the asset local.
+   */
+  prepare() {
     try {
-      if (globalThis.navigator?.audioSession && 'type' in globalThis.navigator.audioSession) {
-        globalThis.navigator.audioSession.type = 'playback';
-      }
+      const media = this.#ensureTimeline();
+      media.preload = 'auto';
+      media.load?.();
+      return true;
     } catch (_) {
-      // Audio Session is optional and must never block the practice.
+      return false;
     }
-
-    const AudioContextCtor = globalThis.AudioContext ?? globalThis.webkitAudioContext;
-    if (!AudioContextCtor) return false;
-
-    if (!this.#context || this.#context.state === 'closed') {
-      this.#context = new AudioContextCtor({ latencyHint: 'interactive' });
-      this.#primed = false;
-    }
-
-    // iOS may report states other than exactly "suspended" after interruptions.
-    // Resume whenever the context is not already running.
-    if (this.#context.state !== 'running') {
-      try { await this.#context.resume(); } catch (_) {}
-    }
-
-    if (this.#context.state !== 'running') return false;
-
-    // Prime the output graph once from the user's BEGIN / TEST AUDIO gesture.
-    // The buffer is intentionally silent; it only establishes an active route.
-    if (!this.#primed) {
-      try {
-        const buffer = this.#context.createBuffer(1, 1, 22050);
-        const source = this.#context.createBufferSource();
-        const gain = this.#context.createGain();
-        source.buffer = buffer;
-        gain.gain.setValueAtTime(0.000001, this.#context.currentTime);
-        source.connect(gain).connect(this.#context.destination);
-        source.start();
-        this.#primed = true;
-      } catch (_) {
-        // Priming failure is non-fatal if the context itself is running.
-      }
-    }
-
-    return true;
   }
 
-  async cue(kind = 'phase') {
+  /**
+   * Play a short cue using a FRESH HTMLMediaElement. Unlike the previous Web Audio implementation, this never treats an internal
+   * engine state as proof of audible speaker output. Calls from buttons/forms retain a direct user gesture.
+   */
+  async playOneShot(_kind = 'phase', { force = false } = {}) {
+    if (!this.#enabled && !force) return false;
+    let media;
+    try {
+      media = this.#newMedia(CUE_URL);
+      media.preload = 'auto';
+      media.volume = this.#mediaVolume({ force });
+      media.currentTime = 0;
+      this.#activeOneShots.add(media);
+      const cleanup = () => this.#activeOneShots.delete(media);
+      media.addEventListener?.('ended', cleanup, { once: true });
+      media.addEventListener?.('error', cleanup, { once: true });
+      const result = media.play?.();
+      if (result && typeof result.then === 'function') await result;
+      return true;
+    } catch (_) {
+      if (media) this.#activeOneShots.delete(media);
+      return false;
+    }
+  }
+
+
+  async testTimedTransition() {
     if (!this.#enabled) return false;
-    const ok = await this.unlock().catch(() => false);
-    if (!ok) return false;
+    let media;
+    try {
+      media = this.#newMedia(TRANSITION_TEST_URL);
+      media.preload = 'auto';
+      media.volume = this.#mediaVolume({ force: true });
+      this.#activeOneShots.add(media);
+      const cleanup = () => this.#activeOneShots.delete(media);
+      media.addEventListener?.('ended', cleanup, { once: true });
+      media.addEventListener?.('error', cleanup, { once: true });
+      const result = media.play?.();
+      if (result && typeof result.then === 'function') await result;
+      return true;
+    } catch (_) {
+      if (media) this.#activeOneShots.delete(media);
+      return false;
+    }
+  }
 
-    const map = {
-      start:    { frequency: 392, seconds: 0.30, interval: 1.50 },
-      phase:    { frequency: 330, seconds: 0.26, interval: 1.50 },
-      open:     { frequency: 294, seconds: 0.34, interval: 1.50 },
-      encode:   { frequency: 370, seconds: 0.28, interval: 1.50 },
-      transfer: { frequency: 262, seconds: 0.32, interval: 1.50 },
-      deploy:   { frequency: 349, seconds: 0.26, interval: 1.50 },
-      end:      { frequency: 247, seconds: 0.36, interval: 1.50 },
-      test:     { frequency: 440, seconds: 0.42, interval: 1.50 }
+  /**
+   * Start (or restart) the continuous TRAIN cue timeline. The crucial property
+   * is that play() is invoked from the user's explicit CONTINUE/RESUME tap.
+   * Automatic phase cues are already embedded in the file at protocol offsets,
+   * so no later timer callback has to initiate a new sound on iOS.
+   */
+  async startTrainTimeline(offsetSeconds = 0) {
+    if (!this.#enabled) return false;
+    const media = this.#ensureTimeline();
+    this.#clearTimelineStopTimer();
+    try {
+      media.pause?.();
+      media.volume = this.#mediaVolume();
+      if (Number.isFinite(offsetSeconds) && offsetSeconds >= 0) {
+        try { media.currentTime = offsetSeconds; } catch (_) {}
+      }
+      const result = media.play?.();
+      if (result && typeof result.then === 'function') await result;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  pauseTrainTimeline() {
+    this.#clearTimelineStopTimer();
+    try { this.#timeline?.pause?.(); } catch (_) {}
+  }
+
+  stopTrainTimeline({ afterMs = 0, reset = true } = {}) {
+    this.#clearTimelineStopTimer();
+    const stop = () => {
+      try { this.#timeline?.pause?.(); } catch (_) {}
+      if (reset && this.#timeline) {
+        try { this.#timeline.currentTime = 0; } catch (_) {}
+      }
     };
+    if (afterMs > 0) this.#timelineStopTimer = setTimeout(stop, afterMs);
+    else stop();
+  }
 
-    const spec = map[kind] ?? map.phase;
-    const now = this.#context.currentTime;
-    // The previous build attenuated the stored 0.28 volume to ~0.034 peak,
-    // which was easy to miss on a phone. Keep the cue restrained but audible.
-    const peak = Math.max(0.06, Math.min(0.30, 0.055 + (this.#volume * 0.26)));
+  trainTimelineCurrentTime() {
+    return Number(this.#timeline?.currentTime) || 0;
+  }
 
-    const root = this.#context.createOscillator();
-    const overtone = this.#context.createOscillator();
-    const rootGain = this.#context.createGain();
-    const overtoneGain = this.#context.createGain();
+  #ensureTimeline() {
+    if (!this.#timeline) {
+      this.#timeline = this.#newMedia(TRAIN_TIMELINE_URL);
+      this.#timeline.preload = 'auto';
+      this.#timeline.volume = this.#mediaVolume();
+    }
+    return this.#timeline;
+  }
 
-    root.type = 'sine';
-    overtone.type = 'sine';
-    root.frequency.setValueAtTime(spec.frequency, now);
-    overtone.frequency.setValueAtTime(spec.frequency * spec.interval, now);
+  #newMedia(src) {
+    const media = this.#mediaFactory(src);
+    if (!media) throw new Error('HTML audio is unavailable');
+    if (!media.src) media.src = src;
+    return media;
+  }
 
-    shapeEnvelope(rootGain.gain, now, spec.seconds, peak * 0.78);
-    shapeEnvelope(overtoneGain.gain, now, spec.seconds * 0.88, peak * 0.22);
+  #mediaVolume({ force = false } = {}) {
+    // iOS may route volume exclusively through the hardware controls. Browsers
+    // that honor element.volume still receive a clear, restrained cue level.
+    if (force) return 1;
+    return clamp(0.68 + (this.#volume * 0.30), 0.68, 0.98);
+  }
 
-    root.connect(rootGain).connect(this.#context.destination);
-    overtone.connect(overtoneGain).connect(this.#context.destination);
-
-    root.start(now);
-    overtone.start(now + 0.008);
-    root.stop(now + spec.seconds + 0.04);
-    overtone.stop(now + spec.seconds + 0.04);
-    return true;
+  #clearTimelineStopTimer() {
+    if (this.#timelineStopTimer !== null) clearTimeout(this.#timelineStopTimer);
+    this.#timelineStopTimer = null;
   }
 }
 
-function shapeEnvelope(param, now, seconds, peak) {
-  const floor = 0.0001;
-  const attack = Math.min(0.022, seconds * 0.18);
-  param.cancelScheduledValues(now);
-  param.setValueAtTime(floor, now);
-  param.exponentialRampToValueAtTime(Math.max(floor, peak), now + attack);
-  param.exponentialRampToValueAtTime(floor, now + seconds);
+function defaultMediaFactory(src) {
+  if (typeof Audio === 'function') return new Audio(src);
+  if (globalThis.document?.createElement) {
+    const media = globalThis.document.createElement('audio');
+    media.src = src;
+    return media;
+  }
+  throw new Error('HTML audio is unavailable');
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
