@@ -11,7 +11,7 @@ import {
   snapshotDatabase, replaceDatabaseData, resetDatabase, addAppEvent
 } from './data/db.js';
 import { saveCheckpoint, loadCheckpoint, clearCheckpoint } from './data/checkpoint.js';
-import { AudioEngine } from './audio/audio-engine.js';
+import { AudioEngine, TRAIN_TIMELINE_OFFSETS_SECONDS } from './audio/audio-engine.js';
 import { requestWakeLock, releaseWakeLock, downloadText } from './util/platform.js';
 import { renderApp } from './ui/render.js';
 import { KUJI, TRAIN_TIMED_STATES, TRAIN_PHASE_CUES } from './app/protocol-ui.js';
@@ -52,6 +52,7 @@ async function boot() {
     await initializeDatabase(runtime.db);
     await refreshData();
     audio.configure({ enabled: runtime.settings.audio_enabled, volume: runtime.settings.audio_volume });
+    audio.prepare();
     runtime.view = runtime.settings.onboarding_complete ? 'home' : 'onboarding';
     bindEvents();
     registerServiceWorker();
@@ -205,6 +206,7 @@ async function handleClick(event) {
       case 'open-history': runtime.view = 'history'; return render();
       case 'open-protocol': runtime.view = 'protocol'; return render();
       case 'test-audio': return testAudio();
+      case 'test-transition-audio': return testTransitionAudio();
       case 'open-train': runtime.view = 'train_prepare'; return render();
       case 'open-deploy': return openDeployPrepare();
       case 'next-onboarding': runtime.onboardingIndex = Math.min(4, runtime.onboardingIndex + 1); return render();
@@ -296,11 +298,14 @@ async function handleChange(event) {
 }
 
 async function testAudio() {
-  audio.configure({ enabled: true, volume: Math.max(0.45, Number(runtime.settings.audio_volume) || 0.45) });
-  const unlocked = await audio.unlock().catch(() => false);
-  const played = unlocked ? await audio.cue('test').catch(() => false) : false;
-  audio.configure({ enabled: runtime.settings.audio_enabled, volume: runtime.settings.audio_volume });
-  showToast(played ? 'Audio test played.' : 'Audio unavailable. Check device volume and try again.');
+  const played = await audio.playOneShot('test', { force: true }).catch(() => false);
+  showToast(played ? 'Audio play request accepted.' : 'Audio playback was rejected. Check device volume and try again.');
+}
+
+
+async function testTransitionAudio() {
+  const started = await audio.testTimedTransition().catch(() => false);
+  showToast(started ? 'Timed test armed — tone should sound in about 3 seconds.' : 'Timed transition test could not start.');
 }
 
 async function finishOnboarding() {
@@ -324,11 +329,11 @@ async function beginTrain() {
   runtime.reviewRatings = { stillness: 0, breadth: 0, effortlessness: 0, readiness: 0 };
   runtime.reviewFlags = { drowsiness: false, respiratory_discomfort: false };
   runtime.reviewTask = null;
-  await audio.unlock().catch(() => false);
+  // Direct user gesture: use a fresh media element for the session-start cue.
+  void audio.playOneShot('start');
   runtime.wakeLock = await requestWakeLock(runtime.settings.wake_lock_enabled);
   machine.transition('KUJI_INTRO');
   updateActiveCheckpoint();
-  await audio.cue('start').catch(() => false);
   render();
 }
 
@@ -348,7 +353,16 @@ function advanceManualTrain(forward) {
     else if (forward && state === 'KUJI_ZEN') enterTrainState('KUJI_CLOSE');
     return;
   }
-  if (state === 'KUJI_CLOSE' && forward) enterTrainState('REGULATE');
+  if (state === 'KUJI_CLOSE' && forward) {
+    // Critical iOS path: start the continuous timeline from this explicit tap.
+    void audio.startTrainTimeline(0).then(ok => {
+      if (!ok) {
+        void safeEvent('audio_timeline_start_failed', { state: 'REGULATE' });
+        showToast('Transition audio unavailable for this session.');
+      }
+    });
+    enterTrainState('REGULATE', { sound: false });
+  }
 }
 
 function enterTrainState(nextState, { elapsedMs = 0, sound = true } = {}) {
@@ -372,10 +386,11 @@ function enterTrainState(nextState, { elapsedMs = 0, sound = true } = {}) {
     return enterTrainState('TRANSFER', { sound });
   }
   updateActiveCheckpoint();
-  if (sound && ['REGULATE','STABILIZE','RELEASE_COUNT','RELEASE_ANCHOR','OPEN','ENCODE','TRANSFER'].includes(nextState)) {
-    const soundKind = nextState === 'OPEN' ? 'open' : nextState === 'ENCODE' ? 'encode' : nextState === 'TRANSFER' ? 'transfer' : 'phase';
-    audio.cue(soundKind).catch(() => false);
-  }
+  // Automatic TRAIN transition tones are embedded in the continuously playing
+  // media timeline. Stop it shortly after TRANSFER so the final embedded tone
+  // can finish without leaving an 11-minute media session running.
+  if (nextState === 'TRANSFER') audio.stopTrainTimeline({ afterMs: 700, reset: false });
+  void sound; // retained in the signature for carry/recovery compatibility.
   render();
 }
 
@@ -395,6 +410,7 @@ function advanceTimedTrainWithCarry(carryMs = 0, { sound = true } = {}) {
 }
 
 function completeTransfer(taskBegun) {
+  audio.stopTrainTimeline({ reset: true });
   const train = runtime.train;
   train.record.transfer_task_begun = Boolean(taskBegun);
   train.machine.transition('TRAIN_REVIEW');
@@ -404,6 +420,8 @@ function completeTransfer(taskBegun) {
 }
 
 async function finalizeTrain() {
+  // Form submission is a direct user gesture; play before any awaited storage work.
+  void audio.playOneShot('end');
   const train = runtime.train;
   const ratings = runtime.reviewRatings;
   const record = {
@@ -425,7 +443,6 @@ async function finalizeTrain() {
   clearCheckpoint(localStorage);
   runtime.train = null;
   await refreshData();
-  await audio.cue('end').catch(() => false);
   runtime.view = 'home';
   showToast(record.target_state_present ? 'TRAIN complete. Target State recorded.' : 'TRAIN complete. State recorded.');
 }
@@ -456,11 +473,11 @@ async function beginDeploy() {
     task_started: false
   });
   runtime.deploy = { machine, record, variant, timer: new MonotonicTimer() };
-  await audio.unlock().catch(() => false);
+  // Direct form submission gesture.
+  void audio.playOneShot('deploy');
   machine.transition('DEPLOY_ACTIVE');
   runtime.deploy.timer.start(PROTOCOL.deploy[variant].maxDurationMs);
   updateActiveCheckpoint();
-  await audio.cue('deploy').catch(() => false);
   render();
 }
 
@@ -473,7 +490,7 @@ function deployReady() {
   deploy.record.retrieval_latency_ms = Math.round(latency);
   deploy.machine.transition('DEPLOY_SUCCESS');
   updateActiveCheckpoint();
-  audio.cue('deploy').catch(() => false);
+  void audio.playOneShot('deploy');
   render();
   setTimeout(() => {
     if (runtime.deploy === deploy && deploy.machine.state === 'DEPLOY_SUCCESS') {
@@ -530,6 +547,7 @@ function requestSessionExit() {
 
 async function abortCurrentSession(status = 'aborted') {
   runtime.modal = null;
+  audio.stopTrainTimeline({ reset: true });
   if (runtime.train) {
     const record = {
       ...runtime.train.record,
@@ -581,6 +599,7 @@ function handleVisibilityChange() {
   }
 
   runtime.train.timer?.stop();
+  audio.pauseTrainTimeline();
   runtime.train.record.phase_interruptions.push({ state, duration_ms: result.durationMs, at: new Date().toISOString() });
   runtime.pendingVisibilityInterruption = { state, durationMs: result.durationMs };
   runtime.modal = {
@@ -616,11 +635,18 @@ function resumeInterruptedTrainPhase() {
   if (state === 'ENCODE') {
     train.record.encode_performed = false;
     train.encodeSkipped = true;
-    enterTrainState('TRANSFER');
+    audio.stopTrainTimeline({ reset: false });
+    void audio.playOneShot('transfer');
+    enterTrainState('TRANSFER', { sound: false });
     return;
   }
   const key = TRAIN_TIMED_STATES[state];
   if (key) {
+    // RESUME PHASE is a direct user gesture, so re-start the media timeline at
+    // the canonical beginning of the restarted phase.
+    void audio.startTrainTimeline(TRAIN_TIMELINE_OFFSETS_SECONDS[state] ?? 0).then(ok => {
+      if (!ok) void safeEvent('audio_timeline_resume_failed', { state });
+    });
     train.timer = new MonotonicTimer();
     train.timer.start(PROTOCOL.train[key].durationMs);
     train.stateEnteredWallMs = Date.now();
