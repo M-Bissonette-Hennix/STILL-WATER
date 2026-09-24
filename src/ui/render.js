@@ -212,8 +212,9 @@ function settings(model) {
     <div class="card">
       <p class="card-title">Practice</p>
       ${toggle('audio_enabled', 'Transition tones', s.audio_enabled)}
+      <button class="secondary-action audio-test-action" type="button" data-action="test-audio">TEST AUDIO</button>
       ${toggle('wake_lock_enabled', 'Keep screen awake', s.wake_lock_enabled)}
-      ${toggle('kuji_visuals_enabled', 'Kuji reference text', s.kuji_visuals_enabled)}
+      ${toggle('kuji_visuals_enabled', 'Kuji illustrations', s.kuji_visuals_enabled)}
       <div class="form-row"><label for="timer-visibility">Timer</label><select id="timer-visibility" data-setting="timer_visibility"><option value="minimal" ${s.timer_visibility === 'minimal' ? 'selected' : ''}>Minimal</option><option value="hidden" ${s.timer_visibility === 'hidden' ? 'selected' : ''}>Hidden</option></select></div>
     </div>
     <div class="card">
@@ -284,7 +285,7 @@ function trainSessionBody(model) {
   const state = model.trainState;
   if (state === 'KUJI_INTRO') return `<p class="phase-name">Opening Ritual</p><h1 class="phase-cue">Gassho.</h1><p class="phase-detail">One natural inhale. One slow, comfortable exhale. Begin the nine seals when ready.</p>`;
   const kuji = KUJI.find(k => k.state === state);
-  if (kuji) return `<p class="phase-name">${kuji.ordinal} / 09</p><div class="kuji-kanji">${kuji.kanji}</div><h1 class="kuji-name">${kuji.name}</h1>${model.settings.kuji_visuals_enabled ? `<p class="kuji-mudra">${escapeHtml(kuji.mudra)}</p>` : ''}<p class="phase-detail">2–3 natural breaths. Silently recite the syllable once per breath if desired.</p>`;
+  if (kuji) return `<p class="phase-name">${kuji.ordinal} / 09</p><div class="kuji-kanji">${kuji.kanji}</div><h1 class="kuji-name">${kuji.name}</h1>${model.settings.kuji_visuals_enabled ? `<figure class="kuji-illustration-wrap"><img class="kuji-illustration" src="${escapeHtml(kuji.image)}" alt="${escapeHtml(`${kuji.name} ${kuji.mudra} kuji hand seal illustration`)}" decoding="async"></figure>` : ''}<p class="kuji-mudra">${escapeHtml(kuji.mudra)}</p><p class="phase-detail">2–3 natural breaths. Silently recite the syllable once per breath if desired.</p>`;
   if (state === 'KUJI_CLOSE') return `<p class="phase-name">Opening Complete</p><h1 class="phase-cue">Gassho. Bow.</h1><p class="phase-detail">Lower hands to cosmic mudra. Set the half-open lowered gaze. Continue only when positioned.</p>`;
   if (state === 'TRANSFER') return `<p class="phase-name">Transfer</p><h1 class="phase-cue">Carry it into movement.</h1><p class="phase-detail">Gassho. Bow. Rise only when sensation and balance are reliable. Move normally and begin one simple action belonging to the next task.</p>`;
   if (state === 'ENCODE_SKIPPED') return `<p class="phase-name">Encode Skipped</p><h1 class="phase-cue">Remain open.</h1>`;
