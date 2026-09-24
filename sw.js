@@ -1,4 +1,4 @@
-const CACHE = 'still-water-shell-v0.2.0';
+const CACHE = 'still-water-shell-v0.2.1';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './src/app.js',
@@ -6,7 +6,9 @@ const CORE = [
   './src/data/schema.js', './src/data/export.js', './src/data/import.js', './src/data/migrations.js', './src/data/db.js', './src/data/checkpoint.js',
   './src/audio/audio-engine.js', './src/app/protocol-ui.js', './src/ui/render.js', './src/util/platform.js', './src/util/format.js',
   './src/styles/tokens.css', './src/styles/base.css', './src/styles/session.css',
-  './assets/icons/icon.svg', './assets/icons/icon-180.png', './assets/icons/icon-192.png', './assets/icons/icon-512.png'
+  './assets/icons/icon.svg', './assets/icons/icon-180.png', './assets/icons/icon-192.png', './assets/icons/icon-512.png',
+  './assets/kuji/01-rin.jpg', './assets/kuji/02-pyo.jpg', './assets/kuji/03-to.jpg', './assets/kuji/04-sha.jpg', './assets/kuji/05-kai.jpg',
+  './assets/kuji/06-jin.jpg', './assets/kuji/07-retsu.jpg', './assets/kuji/08-zai.jpg', './assets/kuji/09-zen.jpg'
 ];
 
 self.addEventListener('install', event => {
