@@ -213,6 +213,8 @@ function settings(model) {
       <p class="card-title">Practice</p>
       ${toggle('audio_enabled', 'Transition tones', s.audio_enabled)}
       <button class="secondary-action audio-test-action" type="button" data-action="test-audio">TEST AUDIO</button>
+      <button class="secondary-action audio-test-action" type="button" data-action="test-transition-audio">TEST TIMED TRANSITION</button>
+      <p class="subtle audio-test-note">Timed test stays silent for about 3 seconds, then sounds without another tap.</p>
       ${toggle('wake_lock_enabled', 'Keep screen awake', s.wake_lock_enabled)}
       ${toggle('kuji_visuals_enabled', 'Kuji illustrations', s.kuji_visuals_enabled)}
       <div class="form-row"><label for="timer-visibility">Timer</label><select id="timer-visibility" data-setting="timer_visibility"><option value="minimal" ${s.timer_visibility === 'minimal' ? 'selected' : ''}>Minimal</option><option value="hidden" ${s.timer_visibility === 'hidden' ? 'selected' : ''}>Hidden</option></select></div>
