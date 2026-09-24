@@ -1,0 +1,26 @@
+
+> still-water@0.2.2 certify
+> node scripts/certify.js
+
+==========================================================
+STILL WATER APPLICATION CHECKPOINT 0.2.2
+PRACTICE PROTOCOL 1.0
+==========================================================
+regulate             120000 ms
+inhale                 4000 ms
+exhale                 6000 ms
+stabilize            300000 ms
+releaseCount          30000 ms
+releaseAnchor         30000 ms
+open                 180000 ms
+encode                20000 ms
+deploy60              60000 ms
+deploy30              30000 ms
+deploy15              15000 ms
+----------------------------------------------------------
+TRAIN states       22
+DEPLOY states      7
+IndexedDB          still_water v1 / 6 stores
+CERTIFICATE        PASS
+==========================================================
+{"certificate":"STILL_WATER_APPLICATION_CHECKPOINT","appVersion":"0.2.2","protocolVersion":"1.0","database":{"name":"still_water","version":1,"stores":["profile","settings","train_sessions","deploy_sessions","progress_state","app_events"]},"generatedAt":"2026-09-24T17:45:41.100Z","constants":{"regulate":120000,"inhale":4000,"exhale":6000,"stabilize":300000,"releaseCount":30000,"releaseAnchor":30000,"open":180000,"encode":20000,"deploy60":60000,"deploy30":30000,"deploy15":15000},"trainStateCount":22,"deployStateCount":7,"status":"PASS","mismatches":[]}

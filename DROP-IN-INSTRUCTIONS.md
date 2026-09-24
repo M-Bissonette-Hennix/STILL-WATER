@@ -1,75 +1,58 @@
-# STILL WATER v0.2.1 — Drop-In Hotfix
+# STILL WATER v0.2.2 — Drop-In Installation
 
-This patch fixes the two first-session defects reported against v0.2.0:
+This hotfix replaces the v0.2.1 Web Audio transition system with an iOS-oriented HTML media architecture.
 
-1. transition tones were effectively inaudible/unreliable on iPhone/PWA;
-2. the nine Kuji screens lacked their corresponding hand-seal illustrations.
+## Important
 
-## Protocol status
+This drop-in contains **no icon files** and **no Kuji illustration files**. Your existing brutalist icons and the working nine-seal illustration set remain untouched.
 
-Practice Protocol remains **1.0**. This patch does **not** change phase timing, respiration timing, progression logic, TRAIN state order, DEPLOY logic, or stored-history schema.
+## Upload
 
-## Install into the existing GitHub repository
+Upload the **contents of this directory** into the root of the existing `STILL-WATER` repository, preserving every relative path. Allow files with matching names to replace the current versions.
 
-Upload the **contents of this folder** into the repository root while preserving the included paths. Allow files with matching names to replace the existing versions. Do not delete unrelated repository files.
+Changed/new paths:
 
-New directory/files:
-
-- `assets/kuji/01-rin.jpg`
-- `assets/kuji/02-pyo.jpg`
-- `assets/kuji/03-to.jpg`
-- `assets/kuji/04-sha.jpg`
-- `assets/kuji/05-kai.jpg`
-- `assets/kuji/06-jin.jpg`
-- `assets/kuji/07-retsu.jpg`
-- `assets/kuji/08-zai.jpg`
-- `assets/kuji/09-zen.jpg`
-- `tests/audio-engine.test.js`
-- `docs/RELEASE-NOTES-v0.2.1.md`
-
-Replacement files:
-
+- `index.html`
 - `sw.js`
 - `package.json`
 - `package-lock.json`
-- `src/audio/audio-engine.js`
+- `README.md`
 - `src/app.js`
-- `src/app/protocol-ui.js`
-- `src/core/protocol.js`
+- `src/audio/audio-engine.js`
 - `src/ui/render.js`
 - `src/styles/session.css`
+- `src/core/protocol.js`
 - `scripts/validate-assets.js`
+- `tests/audio-engine.test.js`
 - `tests/static-shell.test.js`
+- `assets/audio/cue.mp3`
+- `assets/audio/train-timeline.mp3`
+- `assets/audio/transition-test.mp3`
+- `docs/RELEASE-NOTES-v0.2.2.md`
 
-The patch deliberately contains **no app icon files**, so the current brutalist black/white/red icon set in the live repository will remain untouched.
+The verification/certificate files may also be uploaded for repository provenance.
 
-## After committing
+## After GitHub Actions deploys successfully
 
-Your existing GitHub Pages workflow should run automatically. Confirm the workflow is green before using the updated live app.
+1. Open the live GitHub Pages URL in Safari while online.
+2. Refresh once and confirm the Settings build reports **Application 0.2.2 / Practice Protocol 1.0**.
+3. In Settings, press **TEST AUDIO**. A cue should sound immediately.
+4. Press **TEST TIMED TRANSITION**. It should remain silent for about 3 seconds and then sound **without another tap**.
+5. If both work, enter TRAIN and click through the Kuji screens for a technical smoke test. At the final Kuji close screen, press **CONTINUE**. A REGULATE-entry tone should sound almost immediately; the same continuously playing media track will then carry the later automatic boundary cues.
+6. Fully close and reopen the Home Screen PWA after the web build has refreshed so the v0.2.2 service worker/cache is active.
 
-Because STILL WATER is an offline PWA, an already-installed iPhone instance may temporarily hold the old service-worker cache. The service-worker cache name has been bumped to `still-water-shell-v0.2.1` specifically to force a refresh. After deployment:
+If Settings still shows v0.2.1, the old PWA shell is still cached. Reopen the live site in Safari and refresh again before testing audio.
 
-1. fully close the Home Screen STILL WATER app;
-2. while online, open the live GitHub Pages URL once in Safari and allow it to load completely;
-3. refresh once;
-4. close Safari;
-5. reopen the Home Screen app.
+## What changed technically
 
-## Smoke test
+Automatic TRAIN cues no longer use `AudioContext`/Web Audio. The explicit CONTINUE tap into REGULATE starts `assets/audio/train-timeline.mp3`, which remains playing through the entire timed TRAIN segment. Its tones are embedded at the Practice 1.0 boundaries:
 
-Before the next full TRAIN:
+- 0:00 REGULATE
+- 2:00 STABILIZE
+- 7:00 RELEASE COUNT
+- 7:30 RELEASE ANCHOR
+- 8:00 OPEN
+- 11:00 ENCODE / skipped-Encode TRANSFER boundary
+- 11:20 TRANSFER
 
-1. Open **Settings**.
-2. Confirm **Transition tones** is ON.
-3. Tap **TEST AUDIO**. A clearly audible restrained two-oscillator tone should play.
-4. Begin TRAIN and enter the Kuji sequence.
-5. Confirm each of the nine screens shows its correct corresponding illustration.
-6. Continue at least through REGULATE → STABILIZE and confirm a transition tone is audible.
-
-If TEST AUDIO is silent after the updated app is definitely loaded, verify iPhone media volume and retry while the app is foregrounded. That result would distinguish a device/audio-session issue from the original low-gain implementation defect.
-
-## Verification
-
-Automated suite: **55/55 PASS**.
-
-Protocol certificate: **PASS**.
+Practice Protocol remains **1.0**.
