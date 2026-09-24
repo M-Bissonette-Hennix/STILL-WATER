@@ -78,3 +78,35 @@ test('all nine Kuji records map to existing local illustration assets', async ()
     assert.ok(exists(seal.image.slice(2)), `missing Kuji image: ${seal.image}`);
   }
 });
+
+test('audio assets exist, are non-empty, and are service-worker precached', () => {
+  const cue = path.join(root, 'assets/audio/cue.mp3');
+  const timeline = path.join(root, 'assets/audio/train-timeline.mp3');
+  const transitionTest = path.join(root, 'assets/audio/transition-test.mp3');
+  assert.ok(fs.existsSync(cue), 'cue audio missing');
+  assert.ok(fs.statSync(cue).size > 1000, 'cue audio unexpectedly small');
+  assert.ok(fs.existsSync(timeline), 'TRAIN timeline audio missing');
+  assert.ok(fs.statSync(timeline).size > 500_000, 'TRAIN timeline audio unexpectedly small');
+  assert.ok(fs.existsSync(transitionTest), 'timed transition diagnostic audio missing');
+  assert.ok(fs.statSync(transitionTest).size > 5_000, 'timed transition diagnostic unexpectedly small');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  assert.match(sw, /\.\/assets\/audio\/cue\.mp3/);
+  assert.match(sw, /\.\/assets\/audio\/train-timeline\.mp3/);
+  assert.match(sw, /\.\/assets\/audio\/transition-test\.mp3/);
+  assert.match(sw, /still-water-shell-v0\.2\.2/);
+});
+
+test('index preloads the media timeline and cue assets using relative GitHub Pages paths', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.match(html, /href="\.\/assets\/audio\/train-timeline\.mp3"/);
+  assert.match(html, /href="\.\/assets\/audio\/cue\.mp3"/);
+  assert.match(html, /href="\.\/assets\/audio\/transition-test\.mp3"/);
+});
+
+test('critical audio path does not depend on Web Audio AudioContext', () => {
+  const text = fs.readFileSync(path.join(root, 'src/audio/audio-engine.js'), 'utf8');
+  assert.doesNotMatch(text, /AudioContext|webkitAudioContext|createOscillator/);
+  assert.match(text, /train-timeline\.mp3/);
+  assert.match(text, /cue\.mp3/);
+  assert.match(text, /transition-test\.mp3/);
+});
