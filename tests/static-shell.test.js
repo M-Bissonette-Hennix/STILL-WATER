@@ -68,3 +68,13 @@ test('index uses relative app shell paths and restrictive CSP', () => {
   assert.doesNotMatch(html, /src="\/src\//);
   assert.doesNotMatch(html, /href="\/src\//);
 });
+
+
+test('all nine Kuji records map to existing local illustration assets', async () => {
+  const { KUJI } = await import('../src/app/protocol-ui.js');
+  assert.equal(KUJI.length, 9);
+  for (const seal of KUJI) {
+    assert.ok(seal.image?.startsWith('./assets/kuji/'), `missing image path for ${seal.name}`);
+    assert.ok(exists(seal.image.slice(2)), `missing Kuji image: ${seal.image}`);
+  }
+});
