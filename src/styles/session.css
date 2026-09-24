@@ -13,7 +13,17 @@
 .session-actions { width: min(100%, 520px); margin: 24px auto 0; display: grid; gap: 10px; }
 .kuji-kanji { font-size: clamp(4rem, 22vw, 7rem); line-height: 1; font-weight: 400; color: var(--mist); margin: 22px 0 14px; }
 .kuji-name { font-size: 1.8rem; letter-spacing: .14em; margin: 0 0 6px; }
-.kuji-mudra { color: var(--text-secondary); margin: 0 0 26px; }
+.kuji-mudra { color: var(--text-secondary); margin: 0 0 18px; }
+.kuji-illustration-wrap { width: min(74vw, 320px); margin: 16px auto 14px; padding: 0; display: grid; place-items: center; }
+.kuji-illustration { display: block; width: 100%; height: auto; max-height: 34dvh; object-fit: contain; border-radius: 10px; background: #F1EFE8; border: 1px solid color-mix(in srgb, var(--border) 75%, transparent); box-shadow: 0 16px 36px -26px rgba(0,0,0,.68); }
+.audio-test-action { margin: 10px 0 4px; min-height: 48px; }
+@media (max-height: 720px) {
+  .kuji-kanji { font-size: clamp(3rem, 15vw, 5rem); margin: 12px 0 8px; }
+  .kuji-name { font-size: 1.45rem; }
+  .kuji-illustration-wrap { width: min(60vw, 250px); margin: 10px auto; }
+  .kuji-illustration { max-height: 28dvh; }
+  .phase-detail { line-height: 1.45; }
+}
 .aperture-line { width: var(--aperture, 30%); height: 1px; background: var(--water-dim); transition: width var(--duration-field) ease-out, opacity var(--duration-field) ease; }
 .ready-button { width: min(76vw, 360px); aspect-ratio: 1; max-height: 360px; border-radius: 50%; border: 1px solid var(--water-dim); background: color-mix(in srgb, var(--water-dim) 10%, transparent); color: var(--text-primary); font-size: clamp(1.15rem, 5vw, 1.55rem); letter-spacing: .18em; cursor: pointer; transition: background var(--duration-fast), transform var(--duration-fast); }
 .ready-button:active { transform: scale(.985); background: color-mix(in srgb, var(--water-dim) 24%, transparent); }
