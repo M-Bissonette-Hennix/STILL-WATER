@@ -2,7 +2,9 @@ import fs from 'node:fs';
 const files = [
   'index.html','manifest.webmanifest','sw.js',
   'assets/icons/icon.svg','assets/icons/icon-180.png','assets/icons/icon-192.png','assets/icons/icon-512.png',
-  'src/app.js','src/ui/render.js','src/data/db.js','src/data/checkpoint.js'
+  'assets/kuji/01-rin.jpg','assets/kuji/02-pyo.jpg','assets/kuji/03-to.jpg','assets/kuji/04-sha.jpg','assets/kuji/05-kai.jpg',
+  'assets/kuji/06-jin.jpg','assets/kuji/07-retsu.jpg','assets/kuji/08-zai.jpg','assets/kuji/09-zen.jpg',
+  'src/app.js','src/ui/render.js','src/data/db.js','src/data/checkpoint.js','src/audio/audio-engine.js','src/app/protocol-ui.js'
 ];
 let failed = false;
 const jsFiles = ['src/app.js','src/ui/render.js','src/data/db.js','src/core/protocol.js','src/core/state-machine.js','src/core/timing-engine.js','src/core/progression-engine.js'];
