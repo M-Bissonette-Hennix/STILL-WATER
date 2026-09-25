@@ -3,7 +3,7 @@
  * Frozen behavioral constants. Any material change requires a protocol version change.
  */
 export const PROTOCOL_VERSION = '1.0';
-export const APP_VERSION = '0.2.2';
+export const APP_VERSION = '0.3.0';
 // Backward-compatible alias retained for older kernel imports.
 export const APP_KERNEL_VERSION = APP_VERSION;
 
