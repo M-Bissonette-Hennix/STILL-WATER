@@ -1,65 +1,28 @@
-# STILL WATER v0.2.2
+# STILL WATER v0.3.0
 
-Local-first Progressive Web Application implementing **STILL WATER Practice Protocol 1.0**.
+A local-first Progressive Web Application implementing **STILL WATER Practice Protocol 1.0**.
 
-STILL WATER is a precision attentional training instrument: formal TRAIN sessions establish the target state; criterion-gated DEPLOY sessions train increasingly compact retrieval before real activity.
-
-## Current checkpoint
-
-**Application v0.2.2 / Practice Protocol 1.0**
-
-Current implementation includes:
-
-- deterministic TRAIN and DEPLOY state machines;
-- deadline-based monotonic timing;
-- stage-specific progression/gating logic;
-- IndexedDB local persistence and import/export;
-- interruption/crash checkpoints;
-- complete TRAIN and DEPLOY flows;
-- nine local/offline Kuji hand-seal illustrations;
-- iOS-oriented transition audio using HTML media rather than Web Audio on the critical TRAIN path;
-- continuous TRAIN audio timeline with embedded tones at exact protocol boundaries;
-- History, Progress, Settings, Protocol surfaces;
-- installable/offline PWA shell;
-- GitHub Pages workflow;
-- zero third-party runtime dependencies;
-- automated protocol certificate and adversarial test suite.
-
-## Audio architecture
-
-v0.2.2 deliberately does **not** rely on AudioContext for automatic TRAIN transitions.
-
-After Kuji, the explicit **CONTINUE** tap starts a local continuous media timeline. Transition tones are embedded at 0:00, 2:00, 7:00, 7:30, 8:00, 11:00, and 11:20. This prevents iOS from having to authorize a newly-created sound from a timer callback several minutes into a session.
-
-`Settings → TEST AUDIO` uses a fresh HTML media element for each test. `TEST TIMED TRANSITION` stays silent for about three seconds and then sounds without another tap, providing a fast diagnostic of the automatic-transition mechanism.
+v0.3.0 is the first post-use refinement release. It preserves the frozen practice mechanics while improving measurement validity, daily guidance, transfer/carryover telemetry, longitudinal analytics, Generalization guidance, safe Robustification support, local backup hygiene, cue-level control, and PWA update handling.
 
 ## Verify
-
-Requires Node.js 22+.
 
 ```bash
 npm ci --ignore-scripts
 npm run verify
 ```
 
-Current certificate target:
+Expected baseline: all automated tests PASS and the Practice Protocol 1.0 certificate reports PASS.
 
-- 60 automated tests
-- Practice Protocol 1.0 invariants
-- IndexedDB schema v1
-- local asset closure
-- service-worker audio + Kuji precache
+## Deployment
 
-## Run locally
+The repository is GitHub Pages compatible. Keep the existing GitHub Actions Pages workflow and upload the drop-in files preserving their relative paths.
 
-```bash
-npm run serve
-```
+## Privacy
 
-Then open `http://127.0.0.1:4173/`.
+Core practice data remains local to IndexedDB. No accounts, analytics service, advertising SDK, or cloud backend are required.
 
-## Publish
-
-Push to GitHub and use **Settings → Pages → Source: GitHub Actions**. The included workflow validates before publishing.
-
-See `docs/RELEASE-NOTES-v0.2.2.md` for the audio hotfix architecture.
+See:
+- `docs/AUDIT-v0.3.0.md`
+- `docs/RELEASE-NOTES-v0.3.0.md`
+- `CERTIFICATE-v0.3.0.txt`
+- `VERIFY-v0.3.0.txt`

@@ -1,0 +1,506 @@
+
+> still-water@0.3.0 verify
+> npm test && npm run certify && npm run validate:assets
+
+
+> still-water@0.3.0 test
+> node --test
+
+TAP version 13
+# Subtest: TRAIN analytics use recent seven and preserve carryover separately from target-state scoring
+ok 1 - TRAIN analytics use recent seven and preserve carryover separately from target-state scoring
+  ---
+  duration_ms: 3.699744
+  type: 'test'
+  ...
+# Subtest: DEPLOY analytics compare latest five successful latencies with prior five without using timeouts
+ok 2 - DEPLOY analytics compare latest five successful latencies with prior five without using timeouts
+  ---
+  duration_ms: 0.894316
+  type: 'test'
+  ...
+# Subtest: daily directive prioritizes TRAIN, then one DEPLOY after TRAIN when unlocked
+ok 3 - daily directive prioritizes TRAIN, then one DEPLOY after TRAIN when unlocked
+  ---
+  duration_ms: 0.981908
+  type: 'test'
+  ...
+# Subtest: generalization gap selects the least-covered unmet class
+ok 4 - generalization gap selects the least-covered unmet class
+  ---
+  duration_ms: 0.27263
+  type: 'test'
+  ...
+# Subtest: local-first backup recommendation activates after seven sessions and clears after recent export
+ok 5 - local-first backup recommendation activates after seven sessions and clears after recent export
+  ---
+  duration_ms: 0.49171
+  type: 'test'
+  ...
+# Subtest: robustification summary treats retrieval latency as recovery latency only for perturbation trials
+ok 6 - robustification summary treats retrieval latency as recovery latency only for perturbation trials
+  ---
+  duration_ms: 1.013074
+  type: 'test'
+  ...
+# Subtest: explicit cues use fresh HTML media elements rather than a shared AudioContext
+ok 7 - explicit cues use fresh HTML media elements rather than a shared AudioContext
+  ---
+  duration_ms: 1.337333
+  type: 'test'
+  ...
+# Subtest: TEST AUDIO can force playback even when transition tones are disabled
+ok 8 - TEST AUDIO can force playback even when transition tones are disabled
+  ---
+  duration_ms: 1.475641
+  type: 'test'
+  ...
+# Subtest: timed transition diagnostic is a media track that can sound later without a second play call
+ok 9 - timed transition diagnostic is a media track that can sound later without a second play call
+  ---
+  duration_ms: 0.470137
+  type: 'test'
+  ...
+# Subtest: TRAIN timeline is one continuous media element and can restart at a canonical phase offset
+ok 10 - TRAIN timeline is one continuous media element and can restart at a canonical phase offset
+  ---
+  duration_ms: 0.420343
+  type: 'test'
+  ...
+# Subtest: TRAIN timeline offsets exactly match Practice 1.0 phase boundaries
+ok 11 - TRAIN timeline offsets exactly match Practice 1.0 phase boundaries
+  ---
+  duration_ms: 0.775126
+  type: 'test'
+  ...
+# Subtest: checkpoint round-trips and clears
+ok 12 - checkpoint round-trips and clears
+  ---
+  duration_ms: 1.721521
+  type: 'test'
+  ...
+# Subtest: corrupt checkpoint is discarded
+ok 13 - corrupt checkpoint is discarded
+  ---
+  duration_ms: 0.208724
+  type: 'test'
+  ...
+# Subtest: invalid checkpoint mode is rejected
+ok 14 - invalid checkpoint mode is rejected
+  ---
+  duration_ms: 0.277878
+  type: 'test'
+  ...
+# Subtest: IndexedDB contract is frozen at schema v1 with all required stores
+ok 15 - IndexedDB contract is frozen at schema v1 with all required stores
+  ---
+  duration_ms: 1.06983
+  type: 'test'
+  ...
+# Subtest: default settings are valid and local-first compatible
+ok 16 - default settings are valid and local-first compatible
+  ---
+  duration_ms: 0.221864
+  type: 'test'
+  ...
+# Subtest: settings validator rejects dangerous/invalid values
+ok 17 - settings validator rejects dangerous/invalid values
+  ---
+  duration_ms: 0.316907
+  type: 'test'
+  ...
+# Subtest: progress cache preserves explicit stage and records completion timestamp
+ok 18 - progress cache preserves explicit stage and records completion timestamp
+  ---
+  duration_ms: 0.464349
+  type: 'test'
+  ...
+# Subtest: Foundation locks at 3/7 and unlocks at 4/7
+ok 19 - Foundation locks at 3/7 and unlocks at 4/7
+  ---
+  duration_ms: 1.890695
+  type: 'test'
+  ...
+# Subtest: Foundation blocks if drowsiness dominates more than 2 of recent 7
+ok 20 - Foundation blocks if drowsiness dominates more than 2 of recent 7
+  ---
+  duration_ms: 0.36522
+  type: 'test'
+  ...
+# Subtest: respiratory block triggers at >=2 of last 5 and clears after 4 comfortable sessions
+ok 21 - respiratory block triggers at >=2 of last 5 and clears after 4 comfortable sessions
+  ---
+  duration_ms: 0.227132
+  type: 'test'
+  ...
+# Subtest: interrupted deploy is ineligible; genuine timeout counts
+ok 22 - interrupted deploy is ineligible; genuine timeout counts
+  ---
+  duration_ms: 0.402575
+  type: 'test'
+  ...
+# Subtest: Association requires 6 of most recent 8 Deploy 60
+ok 23 - Association requires 6 of most recent 8 Deploy 60
+  ---
+  duration_ms: 0.432541
+  type: 'test'
+  ...
+# Subtest: Compression I requires 6/8 and 2 distinct ordinary contexts
+ok 24 - Compression I requires 6/8 and 2 distinct ordinary contexts
+  ---
+  duration_ms: 0.389967
+  type: 'test'
+  ...
+# Subtest: Compression II requires 6/8 and 3 contexts
+ok 25 - Compression II requires 6/8 and 3 contexts
+  ---
+  duration_ms: 0.37843
+  type: 'test'
+  ...
+# Subtest: fallback recommendation for poor recent Deploy 30 does not erase stage
+ok 26 - fallback recommendation for poor recent Deploy 30 does not erase stage
+  ---
+  duration_ms: 0.280513
+  type: 'test'
+  ...
+# Subtest: generalization requires >=4 trials and >=70% within every class
+ok 27 - generalization requires >=4 trials and >=70% within every class
+  ---
+  duration_ms: 0.846273
+  type: 'test'
+  ...
+# Subtest: generalization 2/4 fails because 50% < 70%
+ok 28 - generalization 2/4 fails because 50% < 70%
+  ---
+  duration_ms: 1.23579
+  type: 'test'
+  ...
+# Subtest: pre-Generalization trials cannot satisfy Generalization gate retroactively
+ok 29 - pre-Generalization trials cannot satisfy Generalization gate retroactively
+  ---
+  duration_ms: 0.382396
+  type: 'test'
+  ...
+# Subtest: kernel never invents a Maintenance completion gate
+ok 30 - kernel never invents a Maintenance completion gate
+  ---
+  duration_ms: 0.824771
+  type: 'test'
+  ...
+# Subtest: median successful latency ignores timeouts and uses true median
+ok 31 - median successful latency ignores timeouts and uses true median
+  ---
+  duration_ms: 0.223987
+  type: 'test'
+  ...
+# Subtest: highest stage is monotonic even if present evidence later weakens
+ok 32 - highest stage is monotonic even if present evidence later weakens
+  ---
+  duration_ms: 0.173632
+  type: 'test'
+  ...
+# Subtest: post-Generalization stages cannot backfill deleted Generalization evidence
+ok 33 - post-Generalization stages cannot backfill deleted Generalization evidence
+  ---
+  duration_ms: 0.17951
+  type: 'test'
+  ...
+# Subtest: protocol version is frozen at 1.0
+ok 34 - protocol version is frozen at 1.0
+  ---
+  duration_ms: 0.840085
+  type: 'test'
+  ...
+# Subtest: canonical TRAIN durations match frozen specification
+ok 35 - canonical TRAIN durations match frozen specification
+  ---
+  duration_ms: 0.155053
+  type: 'test'
+  ...
+# Subtest: canonical paced respiration is 4 in / 6 out / no hold
+ok 36 - canonical paced respiration is 4 in / 6 out / no hold
+  ---
+  duration_ms: 0.161012
+  type: 'test'
+  ...
+# Subtest: breathing phase derives from elapsed time without counter drift
+ok 37 - breathing phase derives from elapsed time without counter drift
+  ---
+  duration_ms: 0.198789
+  type: 'test'
+  ...
+# Subtest: target state requires all four dimensions >= 2
+ok 38 - target state requires all four dimensions >= 2
+  ---
+  duration_ms: 0.204598
+  type: 'test'
+  ...
+# Subtest: TRAIN target-state cache must match ratings
+ok 39 - TRAIN target-state cache must match ratings
+  ---
+  duration_ms: 3.270612
+  type: 'test'
+  ...
+# Subtest: successful DEPLOY requires latency
+ok 40 - successful DEPLOY requires latency
+  ---
+  duration_ms: 0.214863
+  type: 'test'
+  ...
+# Subtest: unsuccessful DEPLOY cannot retain latency
+ok 41 - unsuccessful DEPLOY cannot retain latency
+  ---
+  duration_ms: 0.198699
+  type: 'test'
+  ...
+# Subtest: timeout cannot be successful
+ok 42 - timeout cannot be successful
+  ---
+  duration_ms: 0.126401
+  type: 'test'
+  ...
+# Subtest: optional TRAIN carryover is constrained to 0..3 without breaking older records
+ok 43 - optional TRAIN carryover is constrained to 0..3 without breaking older records
+  ---
+  duration_ms: 0.197267
+  type: 'test'
+  ...
+# Subtest: valid TRAIN session passes
+ok 44 - valid TRAIN session passes
+  ---
+  duration_ms: 3.340598
+  type: 'test'
+  ...
+# Subtest: TRAIN rating outside 0..3 is rejected
+ok 45 - TRAIN rating outside 0..3 is rejected
+  ---
+  duration_ms: 0.403337
+  type: 'test'
+  ...
+# Subtest: negative retrieval latency is rejected
+ok 46 - negative retrieval latency is rejected
+  ---
+  duration_ms: 0.369596
+  type: 'test'
+  ...
+# Subtest: impossible DEPLOY variant is rejected
+ok 47 - impossible DEPLOY variant is rejected
+  ---
+  duration_ms: 0.198379
+  type: 'test'
+  ...
+# Subtest: malformed timestamp is rejected
+ok 48 - malformed timestamp is rejected
+  ---
+  duration_ms: 0.276787
+  type: 'test'
+  ...
+# Subtest: export refuses duplicate session IDs
+ok 49 - export refuses duplicate session IDs
+  ---
+  duration_ms: 0.373583
+  type: 'test'
+  ...
+# Subtest: export round-trip parses and validates
+ok 50 - export round-trip parses and validates
+  ---
+  duration_ms: 0.574165
+  type: 'test'
+  ...
+# Subtest: TRAIN canonical path is legal
+ok 51 - TRAIN canonical path is legal
+  ---
+  duration_ms: 2.545271
+  type: 'test'
+  ...
+# Subtest: OPEN may skip ENCODE but may not jump directly to TRANSFER
+ok 52 - OPEN may skip ENCODE but may not jump directly to TRANSFER
+  ---
+  duration_ms: 1.176771
+  type: 'test'
+  ...
+# Subtest: STABILIZE cannot jump to OPEN or ENCODE
+ok 53 - STABILIZE cannot jump to OPEN or ENCODE
+  ---
+  duration_ms: 0.211008
+  type: 'test'
+  ...
+# Subtest: Kuji backward navigation is one seal only where allowed
+ok 54 - Kuji backward navigation is one seal only where allowed
+  ---
+  duration_ms: 0.203707
+  type: 'test'
+  ...
+# Subtest: DEPLOY can terminate as success, timeout, or interruption only from active
+ok 55 - DEPLOY can terminate as success, timeout, or interruption only from active
+  ---
+  duration_ms: 0.317338
+  type: 'test'
+  ...
+# Subtest: browser module import graph is closed over local files
+ok 56 - browser module import graph is closed over local files
+  ---
+  duration_ms: 3.208238
+  type: 'test'
+  ...
+# Subtest: service worker precache references existing local assets
+ok 57 - service worker precache references existing local assets
+  ---
+  duration_ms: 1.228789
+  type: 'test'
+  ...
+# Subtest: manifest is relative-path GitHub Pages compatible and icons exist
+ok 58 - manifest is relative-path GitHub Pages compatible and icons exist
+  ---
+  duration_ms: 0.376917
+  type: 'test'
+  ...
+# Subtest: index uses relative app shell paths and restrictive CSP
+ok 59 - index uses relative app shell paths and restrictive CSP
+  ---
+  duration_ms: 0.408415
+  type: 'test'
+  ...
+# Subtest: all nine Kuji records map to existing local illustration assets
+ok 60 - all nine Kuji records map to existing local illustration assets
+  ---
+  duration_ms: 6.888598
+  type: 'test'
+  ...
+# Subtest: audio assets exist, are non-empty, and are service-worker precached
+ok 61 - audio assets exist, are non-empty, and are service-worker precached
+  ---
+  duration_ms: 0.384579
+  type: 'test'
+  ...
+# Subtest: index preloads the media timeline and cue assets using relative GitHub Pages paths
+ok 62 - index preloads the media timeline and cue assets using relative GitHub Pages paths
+  ---
+  duration_ms: 0.284298
+  type: 'test'
+  ...
+# Subtest: critical audio path does not depend on Web Audio AudioContext
+ok 63 - critical audio path does not depend on Web Audio AudioContext
+  ---
+  duration_ms: 0.230958
+  type: 'test'
+  ...
+# Subtest: deadline timer does not depend on render callback cadence
+ok 64 - deadline timer does not depend on render callback cadence
+  ---
+  duration_ms: 2.408915
+  type: 'test'
+  ...
+# Subtest: timer stop freezes elapsed/remaining snapshot
+ok 65 - timer stop freezes elapsed/remaining snapshot
+  ---
+  duration_ms: 0.180322
+  type: 'test'
+  ...
+# Subtest: background >15s is substantive; exactly 15s is not
+ok 66 - background >15s is substantive; exactly 15s is not
+  ---
+  duration_ms: 0.1325
+  type: 'test'
+  ...
+# Subtest: DEPLOY cue schedules are deterministic
+ok 67 - DEPLOY cue schedules are deterministic
+  ---
+  duration_ms: 0.159911
+  type: 'test'
+  ...
+# Subtest: timer can reconstruct an in-progress phase from elapsed monotonic time
+ok 68 - timer can reconstruct an in-progress phase from elapsed monotonic time
+  ---
+  duration_ms: 0.128684
+  type: 'test'
+  ...
+# Subtest: home renders daily directive and PWA update affordance without breaking primary actions
+ok 69 - home renders daily directive and PWA update affordance without breaking primary actions
+  ---
+  duration_ms: 0.940276
+  type: 'test'
+  ...
+# Subtest: TRAIN review has no selected zero ratings by default and requires explicit state choices
+ok 70 - TRAIN review has no selected zero ratings by default and requires explicit state choices
+  ---
+  duration_ms: 0.477438
+  type: 'test'
+  ...
+# Subtest: robustification prepare renders only benign choices and explicit prohibition copy
+ok 71 - robustification prepare renders only benign choices and explicit prohibition copy
+  ---
+  duration_ms: 0.419261
+  type: 'test'
+  ...
+# Subtest: settings exposes cue level and local backup timestamp
+ok 72 - settings exposes cue level and local backup timestamp
+  ---
+  duration_ms: 0.220211
+  type: 'test'
+  ...
+1..72
+# tests 72
+# suites 0
+# pass 72
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 281.874162
+
+> still-water@0.3.0 certify
+> node scripts/certify.js
+
+==========================================================
+STILL WATER APPLICATION CHECKPOINT 0.3.0
+PRACTICE PROTOCOL 1.0
+==========================================================
+regulate             120000 ms
+inhale                 4000 ms
+exhale                 6000 ms
+stabilize            300000 ms
+releaseCount          30000 ms
+releaseAnchor         30000 ms
+open                 180000 ms
+encode                20000 ms
+deploy60              60000 ms
+deploy30              30000 ms
+deploy15              15000 ms
+----------------------------------------------------------
+TRAIN states       22
+DEPLOY states      7
+IndexedDB          still_water v1 / 6 stores
+CERTIFICATE        PASS
+==========================================================
+{"certificate":"STILL_WATER_APPLICATION_CHECKPOINT","appVersion":"0.3.0","protocolVersion":"1.0","database":{"name":"still_water","version":1,"stores":["profile","settings","train_sessions","deploy_sessions","progress_state","app_events"]},"generatedAt":"2026-09-25T16:18:46.782Z","constants":{"regulate":120000,"inhale":4000,"exhale":6000,"stabilize":300000,"releaseCount":30000,"releaseAnchor":30000,"open":180000,"encode":20000,"deploy60":60000,"deploy30":30000,"deploy15":15000},"trainStateCount":22,"deployStateCount":7,"status":"PASS","mismatches":[]}
+
+> still-water@0.3.0 validate:assets
+> node scripts/validate-assets.js
+
+PASS — index.html
+PASS — manifest.webmanifest
+PASS — sw.js
+PASS — assets/icons/icon.svg
+PASS — assets/icons/icon-180.png
+PASS — assets/icons/icon-192.png
+PASS — assets/icons/icon-512.png
+PASS — assets/audio/cue.mp3
+PASS — assets/audio/train-timeline.mp3
+PASS — assets/audio/transition-test.mp3
+PASS — assets/kuji/01-rin.jpg
+PASS — assets/kuji/02-pyo.jpg
+PASS — assets/kuji/03-to.jpg
+PASS — assets/kuji/04-sha.jpg
+PASS — assets/kuji/05-kai.jpg
+PASS — assets/kuji/06-jin.jpg
+PASS — assets/kuji/07-retsu.jpg
+PASS — assets/kuji/08-zai.jpg
+PASS — assets/kuji/09-zen.jpg
+PASS — src/app.js
+PASS — src/ui/render.js
+PASS — src/data/db.js
+PASS — src/data/checkpoint.js
+PASS — src/audio/audio-engine.js
+PASS — src/app/protocol-ui.js
+PASS — no external runtime references in critical modules

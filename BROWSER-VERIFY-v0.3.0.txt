@@ -1,0 +1,19 @@
+STILL WATER v0.3.0 — BROWSER VERIFICATION NOTE
+
+Attempted local Chromium/Playwright verification against http://127.0.0.1:4173.
+The environment-level Chromium policy blocks local origins with:
+
+  net::ERR_BLOCKED_BY_ADMINISTRATOR
+
+This is the same centrally imposed browser restriction encountered in prior STILL WATER checkpoints and is not an application-origin HTTP error.
+
+Compensating verification performed:
+- all browser JavaScript modules parse successfully;
+- browser module graph is closed over local files;
+- service-worker precache closure passes;
+- manifest relative-path/GitHub Pages checks pass;
+- UI string-render smoke tests cover Home, TRAIN review, Robustification, and Settings;
+- protocol certificate passes;
+- full automated suite passes.
+
+Live-origin smoke verification should still be performed after the GitHub Pages deployment updates to v0.3.0.

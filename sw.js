@@ -1,8 +1,8 @@
-const CACHE = 'still-water-shell-v0.2.2';
+const CACHE = 'still-water-shell-v0.3.0';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './src/app.js',
-  './src/core/protocol.js', './src/core/state-machine.js', './src/core/timing-engine.js', './src/core/progression-engine.js',
+  './src/core/protocol.js', './src/core/state-machine.js', './src/core/timing-engine.js', './src/core/progression-engine.js', './src/core/analytics.js',
   './src/data/schema.js', './src/data/export.js', './src/data/import.js', './src/data/migrations.js', './src/data/db.js', './src/data/checkpoint.js',
   './src/audio/audio-engine.js', './src/app/protocol-ui.js', './src/ui/render.js', './src/util/platform.js', './src/util/format.js',
   './src/styles/tokens.css', './src/styles/base.css', './src/styles/session.css',
