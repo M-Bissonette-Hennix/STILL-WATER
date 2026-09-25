@@ -46,6 +46,7 @@ export function makeTrainSession(overrides = {}) {
     respiratory_discomfort_flag: overrides.respiratory_discomfort_flag ?? false,
     context: overrides.context ?? { task: null, modifiers: [] },
     transfer_task_begun: overrides.transfer_task_begun ?? false,
+    carryover: overrides.carryover ?? null,
     notes: overrides.notes ?? null
   };
 }
@@ -85,6 +86,7 @@ export function validateTrainSession(session) {
   booleanField(session.drowsiness_flag, 'drowsiness_flag', errors);
   booleanField(session.respiratory_discomfort_flag, 'respiratory_discomfort_flag', errors);
   booleanField(session.transfer_task_begun, 'transfer_task_begun', errors);
+  if (session.carryover !== undefined && session.carryover !== null) integerRange(session.carryover, 0, 3, 'carryover', errors);
   validateContext(session.context, errors);
   return result(errors);
 }

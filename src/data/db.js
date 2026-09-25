@@ -15,7 +15,8 @@ const DEFAULT_SETTINGS = Object.freeze({
   default_train_context: null,
   confirm_before_exit: true,
   onboarding_complete: false,
-  install_prompt_dismissed: false
+  install_prompt_dismissed: false,
+  last_export_at: null
 });
 
 export async function openDatabase({ indexedDBImpl = globalThis.indexedDB } = {}) {
@@ -228,6 +229,7 @@ export function validateSettings(settings) {
   if (typeof settings.wake_lock_enabled !== 'boolean') throw new TypeError('wake_lock_enabled must be boolean');
   if (typeof settings.confirm_before_exit !== 'boolean') throw new TypeError('confirm_before_exit must be boolean');
   if (typeof settings.onboarding_complete !== 'boolean') throw new TypeError('onboarding_complete must be boolean');
+  if (settings.last_export_at !== null && (typeof settings.last_export_at !== 'string' || Number.isNaN(Date.parse(settings.last_export_at)))) throw new TypeError('last_export_at must be null or a valid date-time string');
   return true;
 }
 
