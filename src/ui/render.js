@@ -32,6 +32,9 @@ function viewContent(model) {
     case 'home': return home(model);
     case 'train_prepare': return trainPrepare(model);
     case 'deploy_prepare': return deployPrepare(model);
+    case 'robustify_prepare': return robustifyPrepare(model);
+    case 'robustify_active': return robustifyActive(model);
+    case 'robustify_reset': return robustifyReset(model);
     case 'progress': return progress(model);
     case 'history': return history(model);
     case 'history_detail': return historyDetail(model);
@@ -66,22 +69,35 @@ function home(model) {
   const stage = formatStage(model.progress?.highest_stage_unlocked ?? 'foundation');
   const deploy = model.progress?.recommended_deploy_variant;
   const trainLabel = model.trainCompletedToday ? 'TRAIN AGAIN' : 'TRAIN';
+  const robustificationUnlocked = ['robustification', 'maintenance'].includes(model.progress?.highest_stage_unlocked);
   return `<section class="home">
+    ${model.updateReady ? `<div class="notice update-notice"><strong>Application update ready.</strong><br><button class="inline-action" data-action="reload-update">Reload now</button></div>` : ''}
     <div class="hero-copy">
       <p class="eyebrow">${escapeHtml(stage)}</p>
       <h1 class="stage-title">Quiet. Broad.<br>Ready.</h1>
       <p class="subtle">Train the state. Retrieve the state. Carry it into action.</p>
     </div>
+    ${todayCard(model.todayDirective)}
     <button class="primary-action" data-action="open-train">${trainLabel}${model.trainCompletedToday ? '<br><span class="muted">Completed today</span>' : ''}</button>
     <button class="secondary-action" data-action="open-deploy" ${deploy ? '' : 'disabled'}>
       DEPLOY${deploy ? ` ${escapeHtml(deploy)}` : '<br><span class="muted">Available after Foundation</span>'}
     </button>
+    ${robustificationUnlocked ? '<button class="secondary-action" data-action="open-robustify">ROBUSTIFY</button>' : ''}
+    ${model.backupRecommended ? '<div class="notice backup-notice">Local history has not been backed up recently. Export a backup from Settings.</div>' : ''}
     <nav class="nav-row" aria-label="Application">
       <button class="nav-link" data-action="open-progress">Progress</button>
       <button class="nav-link" data-action="open-history">History</button>
       <button class="nav-link" data-action="open-protocol">Protocol</button>
     </nav>
   </section>`;
+}
+
+function todayCard(directive) {
+  if (!directive) return '';
+  return `<div class="today-card">
+    <div><p class="card-title">Today</p><strong>${escapeHtml(directive.title)}</strong><p class="subtle">${escapeHtml(directive.copy)}</p></div>
+    ${directive.action ? `<button class="inline-action" data-action="${escapeHtml(directive.action)}">${escapeHtml(directive.actionLabel)}</button>` : ''}
+  </div>`;
 }
 
 function trainPrepare(model) {
@@ -127,34 +143,115 @@ function deployPrepare(model) {
         <button class="quiet-action" type="button" data-action="go-home">CANCEL</button>
       </div>
     </form>
-    ${model.progress?.highest_stage_unlocked === 'generalization' ? '<p class="notice">Generalization is active: vary context deliberately rather than repeating only the easiest setting.</p>' : ''}
+    ${model.progress?.highest_stage_unlocked === 'generalization' ? `<p class="notice">Generalization is active. ${model.generalizationGap ? `Next evidence gap: <strong>${escapeHtml(generalizationClassLabel(model.generalizationGap.name))}</strong>.` : 'Vary context deliberately rather than repeating only the easiest setting.'}</p>` : ''}
     ${model.progress?.highest_stage_unlocked === 'robustification' ? '<p class="notice">Robustification is unlocked. Mild-perturbation orchestration remains deliberately separate from ordinary DEPLOY in this checkpoint.</p>' : ''}
   </section>`;
+}
+
+function robustifyPrepare(model) {
+  const variants = model.unlockedDeployVariants.map(v => `<option value="${v}" ${v === model.robustifyDraft.variant ? 'selected' : ''}>DEPLOY ${v}</option>`).join('');
+  return `<section>
+    <h1 class="screen-title">ROBUSTIFY</h1>
+    <p class="screen-copy">Mild perturbation → ordinary reset → retrieval. The target is recovery, not maximum calm.</p>
+    <form id="robustify-prep-form">
+      <div class="card">
+        <div class="form-row"><label for="perturbation">Benign perturbation</label><select id="perturbation" name="perturbation">${perturbationOptions(model.robustifyDraft.type)}</select></div>
+        <div class="form-row"><label for="robustify-variant">Recovery window</label><select id="robustify-variant" name="variant">${variants}</select></div>
+        <div class="form-row"><label for="robustify-task">Next task</label><select id="robustify-task" name="task">${taskOptions(model.robustifyDraft.task)}</select></div>
+        <div class="form-row"><label>Context</label><div class="chip-grid">${modifierChips(model.robustifyDraft.modifiers)}</div></div>
+      </div>
+      <div class="notice warning">Never use pain, breath restriction, sleep deprivation, panic induction, extreme heat/cold, intoxicants, interpersonal provocation, or hazardous exposure.</div>
+      <div class="session-actions"><button class="primary-action" type="submit">BEGIN PERTURBATION</button><button class="quiet-action" type="button" data-action="go-home">CANCEL</button></div>
+    </form>
+  </section>`;
+}
+
+function robustifyActive(model) {
+  const item = perturbationLabel(model.robustifyActive?.type);
+  return `<section class="home">
+    <p class="eyebrow">Robustification</p>
+    <h1 class="stage-title">${escapeHtml(item)}</h1>
+    <p class="subtle">Perform the chosen mild challenge. Stop if it becomes more than ordinary manageable activation.</p>
+    <button class="primary-action" data-action="robustify-complete">PERTURBATION COMPLETE</button>
+    <button class="quiet-action" data-action="go-home">CANCEL</button>
+  </section>`;
+}
+
+function robustifyReset(model) {
+  return `<section class="home">
+    <p class="eyebrow">Reset window</p>
+    <h1 class="stage-title">Ordinary breath.<br>Stay external.</h1>
+    <p class="subtle">Allow approximately 5–15 seconds of ordinary reset. Do not deliberately slow or hold the breath. Begin recovery when ready.</p>
+    <button class="primary-action" data-action="robustify-begin-recovery">BEGIN RECOVERY</button>
+    <button class="quiet-action" data-action="go-home">CANCEL</button>
+  </section>`;
+}
+
+function perturbationOptions(selected) {
+  const items = [
+    ['difficult_puzzle','Difficult puzzle'], ['brief_arithmetic','Brief arithmetic'], ['brisk_walk','Brisk walk'],
+    ['ambient_distraction','Ambient distraction'], ['other_benign','Other benign challenge']
+  ];
+  return items.map(([v,l]) => `<option value="${v}" ${selected === v ? 'selected' : ''}>${l}</option>`).join('');
+}
+
+function perturbationLabel(value) {
+  return ({ difficult_puzzle: 'Difficult puzzle', brief_arithmetic: 'Brief arithmetic', brisk_walk: 'Brisk walk', ambient_distraction: 'Ambient distraction', other_benign: 'Benign challenge' })[value] ?? 'Benign challenge';
 }
 
 function progress(model) {
   const p = model.progress;
   const g = p?.gates ?? {};
-  const median = model.medianLatency;
+  const t = model.trainAnalytics ?? {};
+  const d = model.deployAnalytics ?? {};
+  const r = model.robustificationAnalytics ?? {};
   return `<section>
     <h1 class="screen-title">PROGRESS</h1>
     <p class="eyebrow">${escapeHtml(formatStage(p?.highest_stage_unlocked ?? 'foundation'))}</p>
     <p class="screen-copy">Capability evidence, not meditation rank.</p>
     <div class="card">
-      <p class="card-title">Current evidence</p>
+      <p class="card-title">State availability · recent ${t.recentCount ?? 0}</p>
+      ${gateLine('Target State', t.recentCount ? `${t.targetCount}/${t.recentCount}` : 'No observations')}
+      ${gateLine('Stillness median', metricOrDash(t.dimensionMedian?.stillness))}
+      ${gateLine('Breadth median', metricOrDash(t.dimensionMedian?.breadth))}
+      ${gateLine('Effortlessness median', metricOrDash(t.dimensionMedian?.effortlessness))}
+      ${gateLine('Readiness median', metricOrDash(t.dimensionMedian?.readiness))}
+      ${gateLine('Carryover median', t.carryoverMedian === null || t.carryoverMedian === undefined ? 'More observations needed' : `${t.carryoverMedian.toFixed(1)} / 3`)}
+      ${gateLine('First-action transfer', t.recentCount ? `${t.transferCount}/${t.recentCount}` : '—')}
+    </div>
+    <div class="card">
+      <p class="card-title">Retrieval</p>
+      ${gateLine('Recommended', p?.recommended_deploy_variant ? `DEPLOY ${p.recommended_deploy_variant}` : 'Locked')}
+      ${gateLine('Recent reliability', d.recentCount ? `${d.successes}/${d.recentCount}` : 'No observations')}
+      ${gateLine('Median · latest successful attempts', d.recentMedianMs === null ? 'More observations needed' : formatLatency(d.recentMedianMs))}
+      ${gateLine('Latency change vs prior window', latencyDelta(d.deltaMs))}
+    </div>
+    <div class="card">
+      <p class="card-title">Stage gates</p>
       ${gateLine('Foundation target state', `${g.foundation?.targetCount ?? 0} / ${g.foundation?.recentCount ?? 0}`)}
       ${gateLine('DEPLOY 60', gateWindow(g.association))}
       ${gateLine('DEPLOY 30', gateWindow(g.compression1))}
       ${gateLine('DEPLOY 15', gateWindow(g.compression2))}
-      ${gateLine('Recommended retrieval', p?.recommended_deploy_variant ? `DEPLOY ${p.recommended_deploy_variant}` : 'Locked')}
-      ${gateLine('Median successful retrieval', median === null ? 'More observations needed' : formatLatency(median))}
     </div>
     <div class="card">
       <p class="card-title">Generalization</p>
       ${generalizationRows(g.generalization?.classes)}
+      ${model.generalizationGap ? `<p class="subtle">Next evidence gap: <strong>${escapeHtml(generalizationClassLabel(model.generalizationGap.name))}</strong> · ${model.generalizationGap.trials} trials.</p>` : ''}
     </div>
+    ${['robustification','maintenance'].includes(p?.highest_stage_unlocked) ? `<div class="card"><p class="card-title">Robustification</p>${gateLine('Trials', r.trials ?? 0)}${gateLine('Successful recoveries', r.successful ?? 0)}${gateLine('Median recovery latency', r.medianRecoveryMs === null ? 'More observations needed' : formatLatency(r.medianRecoveryMs))}</div>` : ''}
     ${p?.respiratory_progression_block ? '<div class="notice warning">Progression is paused because breathing discomfort has been recorded repeatedly. Use comfortable natural breathing and review the safety guidance.</div>' : ''}
   </section>`;
+}
+
+function metricOrDash(value) { return value === null || value === undefined ? '—' : `${Number(value).toFixed(1)} / 3`; }
+function latencyDelta(value) {
+  if (!Number.isFinite(value)) return 'More observations needed';
+  const sec = Math.abs(value) / 1000;
+  if (Math.abs(value) < 100) return 'Essentially unchanged';
+  return value < 0 ? `${sec.toFixed(1)} sec faster` : `${sec.toFixed(1)} sec slower`;
+}
+function generalizationClassLabel(name) {
+  return ({ seated_cognitive:'Seated cognitive', movement_adjacent:'Movement-adjacent', mild_distraction:'Mild distraction', different_time:'Different time' })[name] ?? name;
 }
 
 function history(model) {
@@ -183,6 +280,7 @@ function historyDetail(model) {
         ${gateLine('Effortlessness', s.effortlessness)}
         ${gateLine('Readiness', s.readiness)}
         ${gateLine('Target State', s.target_state_present ? 'Present' : 'Not established')}
+        ${gateLine('Carryover', s.carryover === null || s.carryover === undefined ? 'Not recorded' : `${s.carryover} / 3`)}
         ${gateLine('Encode', s.encode_performed ? 'Performed' : 'Skipped')}
         ${gateLine('Drowsiness', s.drowsiness_flag ? 'Yes' : 'No')}
         ${gateLine('Breath discomfort', s.respiratory_discomfort_flag ? 'Yes' : 'No')}
@@ -212,6 +310,7 @@ function settings(model) {
     <div class="card">
       <p class="card-title">Practice</p>
       ${toggle('audio_enabled', 'Transition tones', s.audio_enabled)}
+      <div class="form-row"><label for="audio-volume">Cue level · ${Math.round((Number(s.audio_volume) || 0) * 100)}%</label><input id="audio-volume" type="range" min="0" max="1" step="0.05" value="${Number(s.audio_volume) || 0}" data-setting="audio_volume"></div>
       <button class="secondary-action audio-test-action" type="button" data-action="test-audio">TEST AUDIO</button>
       <button class="secondary-action audio-test-action" type="button" data-action="test-transition-audio">TEST TIMED TRANSITION</button>
       <p class="subtle audio-test-note">Timed test stays silent for about 3 seconds, then sounds without another tap.</p>
@@ -222,6 +321,7 @@ function settings(model) {
     <div class="card">
       <p class="card-title">Data</p>
       <button class="secondary-action" data-action="export-data">EXPORT DATA</button>
+      <p class="subtle">Last export: ${s.last_export_at ? escapeHtml(formatDateTime(s.last_export_at)) : 'Never'}</p>
       <button class="secondary-action" data-action="choose-import">IMPORT DATA</button>
       <input class="file-input" id="import-file" type="file" accept="application/json,.json">
       <div class="divider"></div>
@@ -289,7 +389,7 @@ function trainSessionBody(model) {
   const kuji = KUJI.find(k => k.state === state);
   if (kuji) return `<p class="phase-name">${kuji.ordinal} / 09</p><div class="kuji-kanji">${kuji.kanji}</div><h1 class="kuji-name">${kuji.name}</h1>${model.settings.kuji_visuals_enabled ? `<figure class="kuji-illustration-wrap"><img class="kuji-illustration" src="${escapeHtml(kuji.image)}" alt="${escapeHtml(`${kuji.name} ${kuji.mudra} kuji hand seal illustration`)}" decoding="async"></figure>` : ''}<p class="kuji-mudra">${escapeHtml(kuji.mudra)}</p><p class="phase-detail">2–3 natural breaths. Silently recite the syllable once per breath if desired.</p>`;
   if (state === 'KUJI_CLOSE') return `<p class="phase-name">Opening Complete</p><h1 class="phase-cue">Gassho. Bow.</h1><p class="phase-detail">Lower hands to cosmic mudra. Set the half-open lowered gaze. Continue only when positioned.</p>`;
-  if (state === 'TRANSFER') return `<p class="phase-name">Transfer</p><h1 class="phase-cue">Carry it into movement.</h1><p class="phase-detail">Gassho. Bow. Rise only when sensation and balance are reliable. Move normally and begin one simple action belonging to the next task.</p>`;
+  if (state === 'TRANSFER') return `<p class="phase-name">Transfer</p><h1 class="phase-cue">Carry it into movement.</h1><p class="phase-detail">Gassho. Bow. Rise only when sensation and balance are reliable. Put the device down. Move normally and complete one simple action belonging to the next task. Return only after that first action is underway.</p>`;
   if (state === 'ENCODE_SKIPPED') return `<p class="phase-name">Encode Skipped</p><h1 class="phase-cue">Remain open.</h1>`;
   const isRegulate = state === 'REGULATE';
   const aperture = state === 'RELEASE_ANCHOR' ? 92 : state === 'OPEN' || state === 'ENCODE' ? 100 : 46;
@@ -318,24 +418,32 @@ function deploySessionBody(model) {
 }
 
 function trainReview(model) {
+  const ratingsReady = ['stillness','breadth','effortlessness','readiness'].every((key) => Number.isInteger(model.reviewRatings[key]));
   return `<div class="session-shell"><main class="review-shell">
     <p class="eyebrow">After TRAIN</p>
     <h1 class="screen-title">Record the state.</h1>
+    <p class="screen-copy">Select deliberately; blank ratings cannot be saved as zeros.</p>
     <form id="train-review-form">
       <div class="card rating-grid">
         ${ratingRow('Stillness', 'stillness', model.reviewRatings.stillness)}
         ${ratingRow('Breadth', 'breadth', model.reviewRatings.breadth)}
         ${ratingRow('Effortlessness', 'effortlessness', model.reviewRatings.effortlessness)}
         ${ratingRow('Readiness', 'readiness', model.reviewRatings.readiness)}
+        <div class="rating-key"><span><strong>Stillness</strong> reduced capture</span><span><strong>Breadth</strong> perceptual field</span><span><strong>Effortlessness</strong> low manipulation</span><span><strong>Readiness</strong> immediate action</span></div>
       </div>
+      ${model.trainTransferTaskBegun ? `<div class="card"><p class="card-title">Carryover</p><p class="subtle">After the first action, how clearly was the trained state still present?</p>${carryoverRow(model.reviewCarryover)}</div>` : ''}
       <div class="card">
         ${toggleInput('drowsiness', 'Significant drowsiness', model.reviewFlags.drowsiness)}
         ${toggleInput('respiratory_discomfort', 'Respiratory discomfort', model.reviewFlags.respiratory_discomfort)}
         <div class="form-row"><label for="train-context">Next-task context (optional)</label><select id="train-context" name="task">${taskOptions(model.reviewTask)}</select></div>
       </div>
-      <button class="primary-action" type="submit">COMPLETE</button>
+      <button class="primary-action" type="submit" ${ratingsReady && (!model.trainTransferTaskBegun || Number.isInteger(model.reviewCarryover)) ? '' : 'disabled'}>COMPLETE</button>
     </form>
   </main></div>${modal(model.modal)}`;
+}
+
+function carryoverRow(selected) {
+  return `<div class="carryover-row">${[0,1,2,3].map(v => `<button type="button" class="rating-button ${selected === v ? 'selected' : ''}" data-action="set-carryover" data-value="${v}">${v}</button>`).join('')}</div><div class="carryover-labels"><span>absent</span><span>strong</span></div>`;
 }
 
 function deployReview(model) {
