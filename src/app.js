@@ -2,6 +2,7 @@ import { APP_VERSION, PROTOCOL_VERSION, PROTOCOL, targetStatePresent } from './c
 import { createTrainMachine, createDeployMachine, legalTrainTransitions } from './core/state-machine.js';
 import { MonotonicTimer, classifyBackgroundInterruption, cueForElapsed } from './core/timing-engine.js';
 import { medianSuccessfulLatency } from './core/progression-engine.js';
+import { summarizeTrain, summarizeDeploy, summarizeRobustification, deriveDailyDirective, nextGeneralizationGap, backupRecommended } from './core/analytics.js';
 import { makeTrainSession, makeDeploySession } from './data/schema.js';
 import { buildExportBundle, parseAndValidateExport } from './data/export.js';
 import {
@@ -38,9 +39,15 @@ const runtime = {
   backgroundedAtWallMs: null,
   pendingVisibilityInterruption: null,
   deployDraft: { variant: '60', task: null, modifiers: [] },
-  reviewRatings: { stillness: 0, breadth: 0, effortlessness: 0, readiness: 0 },
+  reviewRatings: { stillness: null, breadth: null, effortlessness: null, readiness: null },
+  reviewCarryover: null,
   reviewFlags: { drowsiness: false, respiratory_discomfort: false },
   reviewTask: null,
+  robustifyDraft: { variant: '15', type: 'difficult_puzzle', task: null, modifiers: [] },
+  robustifyActive: null,
+  robustifyPending: null,
+  updateReady: false,
+  reloadingForUpdate: false,
   lastRenderAt: 0
 };
 
@@ -103,8 +110,19 @@ function buildViewModel() {
     historyItems: historyItems(),
     selectedHistory: runtime.selectedHistory,
     reviewRatings: runtime.reviewRatings,
+    reviewCarryover: runtime.reviewCarryover,
     reviewFlags: runtime.reviewFlags,
     reviewTask: runtime.reviewTask,
+    trainAnalytics: summarizeTrain(runtime.trainSessions),
+    deployAnalytics: summarizeDeploy(runtime.deploySessions, runtime.progress?.recommended_deploy_variant ?? null),
+    robustificationAnalytics: summarizeRobustification(runtime.deploySessions),
+    todayDirective: deriveDailyDirective({ trainSessions: runtime.trainSessions, deploySessions: runtime.deploySessions, progress: runtime.progress }),
+    generalizationGap: nextGeneralizationGap(runtime.progress?.gates?.generalization),
+    backupRecommended: backupRecommended({ trainSessions: runtime.trainSessions, settings: runtime.settings }),
+    updateReady: runtime.updateReady,
+    robustifyDraft: runtime.robustifyDraft,
+    robustifyActive: runtime.robustifyActive,
+    robustifyPending: runtime.robustifyPending,
     sessionMode: null
   };
 
@@ -116,7 +134,7 @@ function buildViewModel() {
 function trainViewModel() {
   const train = runtime.train;
   const state = train.machine.state;
-  if (state === 'TRAIN_REVIEW') return { sessionMode: 'train_review' };
+  if (state === 'TRAIN_REVIEW') return { sessionMode: 'train_review', trainTransferTaskBegun: Boolean(train.record.transfer_task_begun) };
   const timed = Boolean(TRAIN_TIMED_STATES[state]);
   let remaining = null;
   let breathLabel = '';
@@ -189,7 +207,7 @@ function trainActions(state) {
     return `<div class="session-actions"><button class="primary-action" data-action="train-next">NEXT</button>${previousAllowed ? '<button class="quiet-action" data-action="train-back">BACK</button>' : ''}</div>`;
   }
   if (state === 'KUJI_CLOSE') return `<div class="session-actions"><button class="primary-action" data-action="train-next">CONTINUE</button></div>`;
-  if (state === 'TRANSFER') return `<div class="session-actions"><button class="primary-action" data-action="train-task-begun">TASK BEGUN</button><button class="quiet-action" data-action="train-transfer-end">END WITHOUT TASK</button></div>`;
+  if (state === 'TRANSFER') return `<div class="session-actions"><button class="primary-action" data-action="train-task-begun">FIRST ACTION COMPLETE</button><button class="quiet-action" data-action="train-transfer-end">END WITHOUT TASK</button></div>`;
   return '';
 }
 
@@ -209,6 +227,10 @@ async function handleClick(event) {
       case 'test-transition-audio': return testTransitionAudio();
       case 'open-train': runtime.view = 'train_prepare'; return render();
       case 'open-deploy': return openDeployPrepare();
+      case 'open-robustify': runtime.view = 'robustify_prepare'; return render();
+      case 'robustify-complete': return completePerturbation();
+      case 'robustify-begin-recovery': return beginRobustifyRecovery();
+      case 'reload-update': return reloadForUpdate();
       case 'next-onboarding': runtime.onboardingIndex = Math.min(4, runtime.onboardingIndex + 1); return render();
       case 'previous-onboarding': runtime.onboardingIndex = Math.max(0, runtime.onboardingIndex - 1); return render();
       case 'finish-onboarding': return finishOnboarding();
@@ -219,6 +241,7 @@ async function handleClick(event) {
       case 'train-task-begun': return completeTransfer(true);
       case 'train-transfer-end': return completeTransfer(false);
       case 'set-rating': runtime.reviewRatings[target.dataset.rating] = Number(target.dataset.value); return render();
+      case 'set-carryover': runtime.reviewCarryover = Number(target.dataset.value); return render();
       case 'request-session-exit': return requestSessionExit();
       case 'close-modal': runtime.modal = null; return render();
       case 'confirm-end-session': return abortCurrentSession('aborted');
@@ -246,6 +269,21 @@ async function handleClick(event) {
 }
 
 async function handleSubmit(event) {
+
+  if (event.target.id === 'robustify-prep-form') {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    runtime.robustifyDraft = {
+      variant: String(form.get('variant') || runtime.progress?.recommended_deploy_variant || '15'),
+      type: String(form.get('perturbation') || 'difficult_puzzle'),
+      task: form.get('task') || null,
+      modifiers: form.getAll('modifier').map(String)
+    };
+    runtime.robustifyActive = { ...runtime.robustifyDraft, startedAtMs: Date.now(), startedAt: new Date().toISOString() };
+    runtime.robustifyPending = null;
+    runtime.view = 'robustify_active';
+    render();
+  }
   if (event.target.id === 'deploy-prep-form') {
     event.preventDefault();
     const form = new FormData(event.target);
@@ -267,7 +305,7 @@ async function handleSubmit(event) {
 async function handleChange(event) {
   const setting = event.target.dataset.setting;
   if (setting) {
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    const value = event.target.type === 'checkbox' ? event.target.checked : setting === 'audio_volume' ? Number(event.target.value) : event.target.value;
     runtime.settings = await saveSettings(runtime.db, { [setting]: value });
     audio.configure({ enabled: runtime.settings.audio_enabled, volume: runtime.settings.audio_volume });
     showToast('Setting saved.');
@@ -326,7 +364,8 @@ async function beginTrain() {
     machine, record, timer: null, encodeSkipped: false,
     startedAtWallMs: Date.now(), stateEnteredWallMs: Date.now()
   };
-  runtime.reviewRatings = { stillness: 0, breadth: 0, effortlessness: 0, readiness: 0 };
+  runtime.reviewRatings = { stillness: null, breadth: null, effortlessness: null, readiness: null };
+  runtime.reviewCarryover = null;
   runtime.reviewFlags = { drowsiness: false, respiratory_discomfort: false };
   runtime.reviewTask = null;
   // Direct user gesture: use a fresh media element for the session-start cue.
@@ -420,10 +459,18 @@ function completeTransfer(taskBegun) {
 }
 
 async function finalizeTrain() {
-  // Form submission is a direct user gesture; play before any awaited storage work.
-  void audio.playOneShot('end');
   const train = runtime.train;
   const ratings = runtime.reviewRatings;
+  if (Object.values(ratings).some((value) => !Number.isInteger(value))) {
+    showToast('Select all four state ratings before completing TRAIN.');
+    return;
+  }
+  if (train.record.transfer_task_begun && !Number.isInteger(runtime.reviewCarryover)) {
+    showToast('Record carryover after the first action.');
+    return;
+  }
+  // Form submission is a direct user gesture; play before any awaited storage work.
+  void audio.playOneShot('end');
   const record = {
     ...train.record,
     completed_at: new Date().toISOString(),
@@ -436,7 +483,8 @@ async function finalizeTrain() {
     drowsiness_flag: runtime.reviewFlags.drowsiness,
     respiratory_discomfort_flag: runtime.reviewFlags.respiratory_discomfort,
     encode_performed: !train.encodeSkipped && train.record.encode_performed,
-    context: { task: runtime.reviewTask, modifiers: [] }
+    context: { task: runtime.reviewTask, modifiers: [] },
+    carryover: train.record.transfer_task_begun ? runtime.reviewCarryover : null
   };
   train.machine.transition('TRAIN_COMPLETE');
   await saveTrainSession(runtime.db, record);
@@ -459,7 +507,7 @@ function openDeployPrepare() {
   render();
 }
 
-async function beginDeploy() {
+async function beginDeploy({ perturbation = null } = {}) {
   const variant = runtime.deployDraft.variant;
   if (!unlockedDeployVariants().includes(variant)) throw new Error('DEPLOY variant is not unlocked');
   const machine = createDeployMachine({ variant });
@@ -470,7 +518,8 @@ async function beginDeploy() {
     context: { task: runtime.deployDraft.task, modifiers: runtime.deployDraft.modifiers },
     retrieval_success: false,
     retrieval_latency_ms: null,
-    task_started: false
+    task_started: false,
+    perturbation
   });
   runtime.deploy = { machine, record, variant, timer: new MonotonicTimer() };
   // Direct form submission gesture.
@@ -534,6 +583,25 @@ async function finalizeDeploy(taskStarted) {
   await refreshData();
   runtime.view = 'home';
   showToast('DEPLOY recorded. Act.');
+}
+
+function completePerturbation() {
+  if (!runtime.robustifyActive) return goHome();
+  runtime.robustifyPending = {
+    ...runtime.robustifyActive,
+    duration_ms: Math.max(0, Date.now() - runtime.robustifyActive.startedAtMs)
+  };
+  runtime.robustifyActive = null;
+  runtime.view = 'robustify_reset';
+  render();
+}
+
+async function beginRobustifyRecovery() {
+  const pending = runtime.robustifyPending;
+  if (!pending) return goHome();
+  runtime.deployDraft = { variant: pending.variant, task: pending.task, modifiers: pending.modifiers };
+  runtime.robustifyPending = null;
+  await beginDeploy({ perturbation: { type: pending.type, duration_ms: pending.duration_ms } });
 }
 
 function requestSessionExit() {
@@ -766,6 +834,8 @@ async function deleteSelectedHistory() {
 }
 
 async function exportData() {
+  const exportedAt = new Date().toISOString();
+  runtime.settings = await saveSettings(runtime.db, { last_export_at: exportedAt });
   const snap = await snapshotDatabase(runtime.db);
   const bundle = buildExportBundle({
     profile: snap.profile,
@@ -811,6 +881,8 @@ async function resetApp() {
 
 function goHome() {
   if (runtime.train || runtime.deploy) return requestSessionExit();
+  runtime.robustifyActive = null;
+  runtime.robustifyPending = null;
   runtime.selectedHistory = null;
   runtime.view = 'home';
   render();
@@ -889,7 +961,34 @@ async function safeEvent(type, detail) {
 
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.register('./sw.js').catch(error => safeEvent('service_worker_failure', { message: error.message }));
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.register('./sw.js').then((registration) => {
+    const inspect = (worker) => {
+      if (!worker) return;
+      worker.addEventListener('statechange', () => {
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          runtime.updateReady = true;
+          if (!runtime.train && !runtime.deploy) render();
+        }
+      });
+    };
+    inspect(registration.installing);
+    registration.addEventListener('updatefound', () => inspect(registration.installing));
+  }).catch(error => safeEvent('service_worker_failure', { message: error.message }));
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (runtime.reloadingForUpdate) return;
+    if (hadController) {
+      runtime.updateReady = true;
+      if (!runtime.train && !runtime.deploy) render();
+    }
+  });
+}
+
+function reloadForUpdate() {
+  if (runtime.train || runtime.deploy) return;
+  runtime.reloadingForUpdate = true;
+  globalThis.location?.reload?.();
 }
 
 function formatMs(ms) {
