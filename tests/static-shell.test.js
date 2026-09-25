@@ -93,7 +93,7 @@ test('audio assets exist, are non-empty, and are service-worker precached', () =
   assert.match(sw, /\.\/assets\/audio\/cue\.mp3/);
   assert.match(sw, /\.\/assets\/audio\/train-timeline\.mp3/);
   assert.match(sw, /\.\/assets\/audio\/transition-test\.mp3/);
-  assert.match(sw, /still-water-shell-v0\.2\.2/);
+  assert.match(sw, /still-water-shell-v0\.3\.0/);
 });
 
 test('index preloads the media timeline and cue assets using relative GitHub Pages paths', () => {

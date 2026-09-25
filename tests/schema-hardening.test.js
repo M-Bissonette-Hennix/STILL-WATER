@@ -22,3 +22,10 @@ test('timeout cannot be successful', () => {
   const s = makeDeploySession({ status: 'timeout', retrieval_success: true, retrieval_latency_ms: 60000 });
   assert.equal(validateDeploySession(s).valid, false);
 });
+
+test('optional TRAIN carryover is constrained to 0..3 without breaking older records', () => {
+  const base = makeTrainSession({ status:'completed', stillness:2, breadth:2, effortlessness:2, readiness:2, target_state_present:true });
+  assert.equal(validateTrainSession(base).valid, true);
+  assert.equal(validateTrainSession({ ...base, carryover: 3 }).valid, true);
+  assert.equal(validateTrainSession({ ...base, carryover: 4 }).valid, false);
+});
